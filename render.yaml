@@ -1,0 +1,36 @@
+# Render Blueprint — deploys VG Analyzer as a single free web service.
+# The Express server serves both the API and the built React client.
+#
+# Setup (one time):
+#   1. Push this repo to GitHub.
+#   2. Create a free Postgres database at https://neon.tech and copy its
+#      connection string (postgresql://...sslmode=require).
+#   3. On https://render.com: New > Blueprint > select this repo.
+#   4. When prompted, set:
+#        DATABASE_URL    = the Neon connection string
+#        ADMIN_PASSWORD  = password for the "admin" account (can add/delete)
+#        VIEWER_PASSWORD = password for the read-only "user" account
+#   5. Deploy. First boot runs migrations and seeds the ticker universe.
+services:
+  - type: web
+    name: vganalyzer
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm --workspace server run start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MARKET_PROVIDER
+        value: yahoo
+      - key: RECOMMENDATION_COUNT
+        value: "40"
+      - key: DATABASE_URL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: VIEWER_PASSWORD
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
