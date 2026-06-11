@@ -1,0 +1,32 @@
+{
+  "name": "vganalyzer",
+  "version": "0.1.0",
+  "private": true,
+  "description": "VG Analyzer - Value Growth stock picker & portfolio tracker",
+  "workspaces": [
+    "server",
+    "client"
+  ],
+  "scripts": {
+    "dev": "concurrently -n server,client -c blue,green \"npm:dev:server\" \"npm:dev:client\"",
+    "dev:server": "npm --workspace server run dev",
+    "dev:client": "npm --workspace client run dev",
+    "build": "npm --workspace server run build && npm --workspace client run build",
+    "db:create": "createdb vganalyzer 2>/dev/null || true",
+    "db:migrate": "npm --workspace server run migrate",
+    "db:seed": "npm --workspace server run seed",
+    "db:reset": "dropdb --if-exists vganalyzer && createdb vganalyzer && npm run db:migrate && npm run db:seed",
+    "test": "npm --workspace server run test && npm --workspace client run test",
+    "test:server": "npm --workspace server run test",
+    "test:client": "npm --workspace client run test",
+    "test:e2e": "npm --workspace client run test:e2e",
+    "typecheck": "npm --workspace server run typecheck && npm --workspace client run typecheck",
+    "setup": "npm install && npm run db:create && npm run db:migrate && npm run db:seed"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

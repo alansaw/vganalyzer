@@ -1,0 +1,279 @@
+{
+  "_comment": "Manual per-ticker overrides applied on top of the live/mock provider. US prices refreshed 2026-06-09 from stockanalysis.com quote API. ALL 20 Canadian (.TO) names refreshed 2026-06-09 from stockanalysis.com TSX pages with real price + trailing P/E + forward P/E; peg computed as trailingPE / implied 1-yr growth% where growth = (trailingPE/forwardPE - 1)*100. Names with declining forward earnings (no computable PEG) keep mock PEG. Holdings (NVDA/SE/TCEHY) carry DCF IVs. US names other than the detailed ones are price-only (ratios still mock). Delete a field or the file to revert.",
+  "asOf": "2026-06-09",
+  "overrides": {
+    "NVDA": {
+      "price": 208.19,
+      "pe": 31.41,
+      "forwardPe": 20.64,
+      "peg": 0.6,
+      "eps": 6.53,
+      "iv": {
+        "bear": 70,
+        "base": 79,
+        "best": 92
+      }
+    },
+    "SE": {
+      "price": 84.87,
+      "pe": 34.08,
+      "forwardPe": 20.46,
+      "peg": 0.51,
+      "eps": 2.54,
+      "iv": {
+        "bear": 142,
+        "base": 167,
+        "best": 205
+      }
+    },
+    "TCEHY": {
+      "price": 57.63,
+      "pe": 17.74,
+      "forwardPe": 13.89,
+      "peg": 0.64,
+      "eps": 3.45,
+      "iv": {
+        "bear": 70,
+        "base": 93,
+        "best": 115
+      }
+    },
+    "MU": {
+      "price": 935.89,
+      "pe": 44.66,
+      "forwardPe": 9.81,
+      "peg": 0.13,
+      "eps": 21.26
+    },
+    "RY.TO": {
+      "price": 276.01,
+      "pe": 17.94,
+      "forwardPe": 16.67,
+      "peg": 2.35,
+      "eps": 15.38
+    },
+    "BNS.TO": {
+      "price": 113.87,
+      "pe": 15.69,
+      "forwardPe": 13.12,
+      "peg": 0.8,
+      "eps": 7.26
+    },
+    "AAPL": {
+      "price": 290.55
+    },
+    "ADI": {
+      "price": 404.62
+    },
+    "AMAT": {
+      "price": 499.21
+    },
+    "AMD": {
+      "price": 475.5
+    },
+    "AVGO": {
+      "price": 392.16
+    },
+    "BAC": {
+      "price": 54.42
+    },
+    "BMY": {
+      "price": 56.48
+    },
+    "C": {
+      "price": 134.73
+    },
+    "CSCO": {
+      "price": 120.36
+    },
+    "CVS": {
+      "price": 97.06
+    },
+    "CVX": {
+      "price": 186.76
+    },
+    "F": {
+      "price": 14.95
+    },
+    "GILD": {
+      "price": 125.5
+    },
+    "GM": {
+      "price": 83.76
+    },
+    "GOOGL": {
+      "price": 364.26
+    },
+    "HPQ": {
+      "price": 24.94
+    },
+    "IBM": {
+      "price": 277.49
+    },
+    "INTC": {
+      "price": 107.92
+    },
+    "JPM": {
+      "price": 312.7
+    },
+    "KO": {
+      "price": 81.34
+    },
+    "LRCX": {
+      "price": 327.16
+    },
+    "MCHP": {
+      "price": 91.47
+    },
+    "MO": {
+      "price": 71.56
+    },
+    "MRK": {
+      "price": 119.6
+    },
+    "MRVL": {
+      "price": 266.88
+    },
+    "MSFT": {
+      "price": 403.41
+    },
+    "NXPI": {
+      "price": 297.41
+    },
+    "ON": {
+      "price": 117.0
+    },
+    "PEP": {
+      "price": 142.78
+    },
+    "PFE": {
+      "price": 25.7
+    },
+    "QCOM": {
+      "price": 205.42
+    },
+    "T": {
+      "price": 22.71
+    },
+    "TGT": {
+      "price": 126.61
+    },
+    "TXN": {
+      "price": 288.63
+    },
+    "VZ": {
+      "price": 45.78
+    },
+    "WFC": {
+      "price": 82.0
+    },
+    "XOM": {
+      "price": 148.91
+    },
+    "BCE.TO": {
+      "price": 34.25,
+      "pe": 5.07,
+      "forwardPe": 13.25
+    },
+    "BMO.TO": {
+      "price": 230.67,
+      "pe": 17.72,
+      "forwardPe": 15.2,
+      "peg": 1.07
+    },
+    "CM.TO": {
+      "price": 154.53,
+      "pe": 15.34,
+      "forwardPe": 14.77,
+      "peg": 3.97
+    },
+    "CNQ.TO": {
+      "price": 62.38,
+      "pe": 13.47,
+      "forwardPe": 10.25,
+      "peg": 0.43
+    },
+    "CNR.TO": {
+      "price": 167.87,
+      "pe": 22.22,
+      "forwardPe": 21.03,
+      "peg": 3.93
+    },
+    "CVE.TO": {
+      "price": 38.56,
+      "pe": 15.89,
+      "forwardPe": 10.26,
+      "peg": 0.29
+    },
+    "ENB.TO": {
+      "price": 77.52,
+      "pe": 26.28,
+      "forwardPe": 26.7
+    },
+    "FTS.TO": {
+      "price": 77.81,
+      "pe": 22.67,
+      "forwardPe": 20.9,
+      "peg": 2.68
+    },
+    "IFC.TO": {
+      "price": 277.77,
+      "pe": 14.79,
+      "forwardPe": 15.45
+    },
+    "MFC.TO": {
+      "price": 54.14,
+      "pe": 15.55,
+      "forwardPe": 11.77,
+      "peg": 0.48
+    },
+    "NA.TO": {
+      "price": 207.27,
+      "pe": 18.36,
+      "forwardPe": 15.66,
+      "peg": 1.06
+    },
+    "NTR.TO": {
+      "price": 92.53,
+      "pe": 13.67,
+      "forwardPe": 10.96,
+      "peg": 0.55
+    },
+    "POW.TO": {
+      "price": 84.74,
+      "pe": 20.39,
+      "forwardPe": 13.62,
+      "peg": 0.41
+    },
+    "SLF.TO": {
+      "price": 103.08,
+      "pe": 19.2,
+      "forwardPe": 12.84,
+      "peg": 0.39
+    },
+    "SU.TO": {
+      "price": 85.32,
+      "pe": 16.26,
+      "forwardPe": 8.42,
+      "peg": 0.17
+    },
+    "T.TO": {
+      "price": 17.09,
+      "pe": 28.5,
+      "forwardPe": 18.67,
+      "peg": 0.54
+    },
+    "TD.TO": {
+      "price": 159.93,
+      "pe": 18.84,
+      "forwardPe": 15.87,
+      "peg": 1.01
+    },
+    "TRP.TO": {
+      "price": 95.13,
+      "pe": 28.06,
+      "forwardPe": 25.78,
+      "peg": 3.17
+    }
+  }
+}
