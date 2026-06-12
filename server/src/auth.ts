@@ -42,10 +42,13 @@ export function authEnabled(): boolean {
 }
 
 export function authenticate(username: string, password: string): Role | null {
+  // Usernames are case-insensitive and whitespace-tolerant (mobile keyboards
+  // autocapitalize, autofill adds spaces). Passwords stay exact.
+  const user = username.trim().toLowerCase();
   const admin = adminPassword();
   const viewer = viewerPassword();
-  if (admin && username === 'admin' && timingSafeEq(password, admin)) return 'admin';
-  if (viewer && username === 'user' && timingSafeEq(password, viewer)) return 'user';
+  if (admin && user === 'admin' && timingSafeEq(password, admin)) return 'admin';
+  if (viewer && user === 'user' && timingSafeEq(password, viewer)) return 'user';
   return null;
 }
 

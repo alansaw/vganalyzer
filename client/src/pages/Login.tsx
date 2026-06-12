@@ -42,6 +42,9 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
             onChange={(e) => setUsername(e.target.value)}
             placeholder="admin or user"
             autoComplete="username"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
             autoFocus
           />
         </label>

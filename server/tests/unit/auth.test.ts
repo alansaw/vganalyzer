@@ -32,6 +32,13 @@ describe('auth', () => {
     expect(authenticate('someone', 'admin-secret')).toBeNull();
   });
 
+  it('accepts case/whitespace variants of the username (mobile autocapitalize), not the password', () => {
+    expect(authenticate('Admin', 'admin-secret')).toBe('admin');
+    expect(authenticate('  ADMIN  ', 'admin-secret')).toBe('admin');
+    expect(authenticate('User', 'viewer-secret')).toBe('user');
+    expect(authenticate('admin', 'Admin-secret')).toBeNull(); // password stays exact
+  });
+
   it('round-trips a valid session token', () => {
     const token = createSessionToken('admin');
     expect(verifySessionToken(token)).toBe('admin');
