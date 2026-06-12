@@ -3,11 +3,17 @@ import { MockProvider } from './mock.js';
 import { YahooProvider } from './yahoo.js';
 import { OverrideProvider, loadOverrides } from './override.js';
 import { CachingProvider } from './cache.js';
+import { RealHistoryProvider } from './realHistory.js';
 import type { MarketDataProvider } from './types.js';
 
 export function createProvider(name: 'yahoo' | 'mock' = config.provider): MarketDataProvider {
   // 1) Base upstream source.
   let provider: MarketDataProvider = name === 'mock' ? new MockProvider() : new YahooProvider();
+
+  // 1b) Real daily price history (stockanalysis.com). With the mock base it is
+  // the primary history source (no synthetic sine charts); with yahoo it is a
+  // rescue used only when yahoo returns nothing (rate limits).
+  provider = new RealHistoryProvider(provider, undefined, name === 'mock');
 
   // 2) Cache upstream calls so repeated requests don't re-hit the API (rate-limit guard).
   provider = new CachingProvider(
@@ -45,3 +51,4 @@ export { MockProvider } from './mock.js';
 export { YahooProvider } from './yahoo.js';
 export { OverrideProvider, loadOverrides } from './override.js';
 export { CachingProvider } from './cache.js';
+export { RealHistoryProvider } from './realHistory.js';
