@@ -16,7 +16,9 @@ services:
     name: vganalyzer
     runtime: node
     plan: free
-    buildCommand: npm install && npm run build
+    # --include=dev is required: NODE_ENV=production makes npm skip
+    # devDependencies, but the build needs typescript/@types/vite.
+    buildCommand: npm install --include=dev && npm run build
     startCommand: npm --workspace server run start
     healthCheckPath: /api/health
     envVars:
