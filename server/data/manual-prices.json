@@ -1,17 +1,17 @@
 {
-  "_comment": "Manual per-ticker overrides applied on top of the live/mock provider. US prices refreshed 2026-06-09 from stockanalysis.com quote API. ALL 20 Canadian (.TO) names refreshed 2026-06-09 from stockanalysis.com TSX pages with real price + trailing P/E + forward P/E; peg computed as trailingPE / implied 1-yr growth% where growth = (trailingPE/forwardPE - 1)*100. Names with declining forward earnings (no computable PEG) keep mock PEG. Holdings (NVDA/SE/TCEHY) carry DCF IVs. US names other than the detailed ones are price-only (ratios still mock). Delete a field or the file to revert.",
-  "asOf": "2026-06-09",
+  "_comment": "Manual per-ticker overrides applied on top of the live/mock provider. US prices refreshed 2026-06-09 from stockanalysis.com quote API. ALL 20 Canadian (.TO) names refreshed 2026-06-09 from stockanalysis.com TSX pages with real price + trailing P/E + forward P/E; peg computed as trailingPE / implied 1-yr growth% where growth = (trailingPE/forwardPE - 1)*100. Names with declining forward earnings (no computable PEG) keep mock PEG. Holdings (NVDA/SE/TCEHY) carry DCF IVs. NVDA re-valued 2026-06-12 with NORMALIZED beta 1.5 (WACC 12.06%) instead of raw 5-yr beta 2.20 (15.56%), which had produced the harsh $79; growth fade 35%->8%, terminal 3%, bear/best = WACC±1% x terminal-g±1% corners. US names other than the detailed ones are price-only (ratios still mock). Delete a field or the file to revert.",
+  "asOf": "2026-06-12",
   "overrides": {
     "NVDA": {
-      "price": 208.19,
-      "pe": 31.41,
-      "forwardPe": 20.64,
+      "price": 205.38,
+      "pe": 31.38,
+      "forwardPe": 20.61,
       "peg": 0.6,
       "eps": 6.53,
       "iv": {
-        "bear": 70,
-        "base": 79,
-        "best": 92
+        "bear": 93,
+        "base": 111,
+        "best": 139
       }
     },
     "SE": {
