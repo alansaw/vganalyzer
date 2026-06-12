@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { api } from '../api/client';
+import type { AuthInfo } from '../types';
 
 interface LoginPageProps {
-  onSuccess: () => void;
+  onSuccess: (info: AuthInfo) => void;
 }
 
 export function LoginPage({ onSuccess }: LoginPageProps) {
@@ -16,8 +17,8 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
     setError(null);
     setBusy(true);
     try {
-      await api.login(username.trim(), password);
-      onSuccess();
+      const info = await api.login(username.trim(), password);
+      onSuccess(info);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed.');
     } finally {

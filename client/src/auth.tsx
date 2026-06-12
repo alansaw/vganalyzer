@@ -42,9 +42,13 @@ export function AuthGate({ children }: { children: ReactNode }) {
   if (me.isError || !me.data) {
     return (
       <LoginPage
-        onSuccess={() => {
-          qc.clear(); // drop any cached data from a previous session/role
-          qc.invalidateQueries();
+        onSuccess={(info) => {
+          // Write the login response into the WATCHED auth query first — that
+          // re-renders the gate immediately. Only then purge other cached data.
+          // (Removing/clearing the watched query first detaches its observer,
+          // so later writes go unnoticed — that bug kept users on this page.)
+          qc.setQueryData(['auth', 'me'], info);
+          qc.removeQueries({ predicate: (q) => q.queryKey[0] !== 'auth' });
         }}
       />
     );
@@ -53,10 +57,11 @@ export function AuthGate({ children }: { children: ReactNode }) {
   const logout = async () => {
     try {
       await api.logout();
-    } finally {
-      qc.clear();
-      qc.invalidateQueries({ queryKey: ['auth'] });
+    } catch {
+      // cookie is httpOnly; even if the request fails we still drop local state
     }
+    qc.setQueryData(['auth', 'me'], null); // closes the gate immediately
+    qc.removeQueries({ predicate: (q) => q.queryKey[0] !== 'auth' });
   };
 
   return <AuthContext.Provider value={{ auth: me.data, logout }}>{children}</AuthContext.Provider>;

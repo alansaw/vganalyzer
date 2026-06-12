@@ -19,8 +19,10 @@ async function http<T>(path: string, init?: RequestInit): Promise<T> {
     ...init,
   });
   if (!res.ok) {
-    // Session expired or not signed in: tell the auth layer to show the login page.
-    if (res.status === 401 && !path.startsWith('/auth/login')) {
+    // Session expired mid-use: tell the auth layer to re-check and show the
+    // login page. Only for DATA endpoints — a 401 from /auth/* itself must not
+    // re-trigger the auth check (that would loop on the login screen).
+    if (res.status === 401 && !path.startsWith('/auth/')) {
       window.dispatchEvent(new Event('vg:unauthorized'));
     }
     let message = `Request failed (${res.status})`;
