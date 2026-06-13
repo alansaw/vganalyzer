@@ -1,6 +1,6 @@
 {
-  "_comment": "Manual per-ticker overrides applied on top of the live/mock provider. US prices refreshed 2026-06-09 from stockanalysis.com quote API. ALL 20 Canadian (.TO) names refreshed 2026-06-09 from stockanalysis.com TSX pages with real price + trailing P/E + forward P/E; peg computed as trailingPE / implied 1-yr growth% where growth = (trailingPE/forwardPE - 1)*100. Names with declining forward earnings (no computable PEG) keep mock PEG. Holdings (NVDA/SE/TCEHY) carry DCF IVs. NVDA re-valued 2026-06-12 with NORMALIZED beta 1.5 (WACC 12.06%) instead of raw 5-yr beta 2.20 (15.56%), which had produced the harsh $79; growth fade 35%->8%, terminal 3%, bear/best = WACC±1% x terminal-g±1% corners. US names other than the detailed ones are price-only (ratios still mock). Delete a field or the file to revert.",
-  "asOf": "2026-06-12",
+  "_comment": "Manual per-ticker overrides applied on top of the live/mock provider. US prices refreshed 2026-06-09 from stockanalysis.com quote API. ALL 20 Canadian (.TO) names refreshed 2026-06-09 from stockanalysis.com TSX pages with real price + trailing P/E + forward P/E; peg computed as trailingPE / implied 1-yr growth% where growth = (trailingPE/forwardPE - 1)*100. Names with declining forward earnings (no computable PEG) keep mock PEG. Holdings (NVDA/SE/TCEHY) carry DCF IVs. NVDA re-valued 2026-06-13 to the REVENUE-ANCHORED case (user's investment thesis): base $228 on concrete FY27 guidance (Q1 FY27 actual $81.6B + Q2 guide $91B => ~$355B full-year run rate vs $216B FY26), ~55% FCF margin, beta 1.42 => WACC 11.4%, terminal 3%. bear $109 = 15.3% WACC (raw-beta risk case); best $319 = high end of analyst consensus ($298-319). Supersedes the earlier conservative TTM-FCF figure ($111, WACC 12.06%). US names other than the detailed ones are price-only (ratios still mock). Delete a field or the file to revert.",
+  "asOf": "2026-06-13",
   "overrides": {
     "NVDA": {
       "price": 205.38,
@@ -9,9 +9,9 @@
       "peg": 0.6,
       "eps": 6.53,
       "iv": {
-        "bear": 93,
-        "base": 111,
-        "best": 139
+        "bear": 109,
+        "base": 228,
+        "best": 319
       }
     },
     "SE": {
