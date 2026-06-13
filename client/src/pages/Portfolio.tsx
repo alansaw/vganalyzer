@@ -9,6 +9,7 @@ import { TransactionForm } from '../components/TransactionForm';
 import { useIsAdmin } from '../auth';
 import { usePortfolio, usePortfolioHistory } from '../hooks/queries';
 import { ivRangeText, money, number, percent, signClass } from '../format';
+import { actionClass, actionForPosition } from '../action';
 import type { Range } from '../types';
 
 export function PortfolioPage() {
@@ -103,6 +104,7 @@ export function PortfolioPage() {
                   <th className="num">Avg cost</th>
                   <th className="num">Price</th>
                   <th className="num">IV (Bear–Best)</th>
+                  <th>Action</th>
                   <th className="num">Mkt value</th>
                   <th className="num">Unrealized</th>
                   <th className="num">Weight</th>
@@ -131,6 +133,16 @@ export function PortfolioPage() {
                       ) : (
                         '—'
                       )}
+                    </td>
+                    <td>
+                      {(() => {
+                        const a = actionForPosition(p.price, p.iv);
+                        return (
+                          <span className={`action-badge ${actionClass(a.action)}`} title={a.reason}>
+                            {a.action}
+                          </span>
+                        );
+                      })()}
                     </td>
                     <td className="num">{money(p.marketValue, p.currency ?? 'USD')}</td>
                     <td className={`num ${signClass(p.unrealized)}`}>{money(p.unrealized, p.currency ?? 'USD')}</td>
