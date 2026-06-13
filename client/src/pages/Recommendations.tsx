@@ -4,6 +4,7 @@ import { Loading, ErrorState, EmptyState } from '../components/States';
 import { useIsAdmin } from '../auth';
 import { useRecommendations, useRefreshRecommendations } from '../hooks/queries';
 import { ivRangeText, money, percent, ratio, signClass } from '../format';
+import { actionClass, actionForPosition } from '../action';
 
 export function RecommendationsPage() {
   const recs = useRecommendations();
@@ -49,6 +50,7 @@ export function RecommendationsPage() {
                   <th className="num">Score</th>
                   <th className="num">Price</th>
                   <th className="num">Intrinsic Value</th>
+                  <th>Action</th>
                   <th className="num">Fwd P/E</th>
                   <th className="num">PEG</th>
                   <th className="num">3-mo</th>
@@ -82,6 +84,16 @@ export function RecommendationsPage() {
                       ) : (
                         '—'
                       )}
+                    </td>
+                    <td>
+                      {(() => {
+                        const a = actionForPosition(r.price, r.iv);
+                        return (
+                          <span className={`action-badge ${actionClass(a.action)}`} title={a.reason}>
+                            {a.action}
+                          </span>
+                        );
+                      })()}
                     </td>
                     <td className="num">{ratio(r.forwardPe, 1)}</td>
                     <td className="num">{ratio(r.peg)}</td>
