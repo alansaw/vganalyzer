@@ -103,7 +103,7 @@ export interface EtfView {
   currency: string;
   price: number;
   aum: string;
-  holdingsCount: number;
+  totalHoldings: number;
   recommendedCount: number;
   matches: string[];
   action: 'Buy' | 'Sell' | 'Hold' | null;

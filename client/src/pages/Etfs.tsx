@@ -34,7 +34,7 @@ export function EtfsPage() {
                   <th>ETF</th>
                   <th className="num">Price</th>
                   <th className="num">AUM</th>
-                  <th className="num">Recommended holdings</th>
+                  <th className="num">Recommended / total holdings</th>
                   <th>Action</th>
                   <th>Why</th>
                 </tr>
@@ -49,7 +49,7 @@ export function EtfsPage() {
                     <td className="num">{money(e.price, e.currency)}</td>
                     <td className="num">{e.aum}</td>
                     <td className="num">
-                      {e.recommendedCount} / {e.holdingsCount}
+                      {e.recommendedCount} / {e.totalHoldings}
                       {e.matches.length > 0 && (
                         <div className="muted small">
                           {e.matches.slice(0, 6).map((t) => (

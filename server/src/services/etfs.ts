@@ -14,7 +14,8 @@ export interface EtfDef {
   currency: string;
   price: number;
   aum: string; // human-readable, e.g. "$65.1B"
-  holdings: string[];
+  totalHoldings: number; // the fund's ACTUAL number of positions (sourced)
+  holdings: string[]; // the subset of fund holdings that are in our screening universe
 }
 
 export const ETFS: EtfDef[] = [
@@ -24,6 +25,7 @@ export const ETFS: EtfDef[] = [
     currency: 'USD',
     price: 619.96,
     aum: '$65.1B',
+    totalHoldings: 26,
     holdings: ['NVDA', 'AVGO', 'TXN', 'QCOM', 'AMD', 'MU', 'ADI', 'AMAT', 'LRCX', 'NXPI', 'MCHP', 'ON', 'MRVL'],
   },
   {
@@ -32,6 +34,7 @@ export const ETFS: EtfDef[] = [
     currency: 'USD',
     price: 53.34,
     aum: '$49.5B',
+    totalHoldings: 80,
     holdings: ['JPM', 'BAC', 'WFC', 'C'],
   },
   {
@@ -40,6 +43,7 @@ export const ETFS: EtfDef[] = [
     currency: 'USD',
     price: 57.55,
     aum: '$39.1B',
+    totalHoldings: 24,
     holdings: ['XOM', 'CVX'],
   },
   {
@@ -48,6 +52,7 @@ export const ETFS: EtfDef[] = [
     currency: 'USD',
     price: 217.09,
     aum: '$179.6B',
+    totalHoldings: 325,
     holdings: ['JPM', 'BAC', 'WFC', 'C', 'XOM', 'CVX', 'PFE', 'MRK', 'BMY', 'KO', 'PEP', 'CSCO', 'IBM', 'INTC', 'T', 'VZ', 'MO', 'GILD', 'CVS', 'TGT'],
   },
   {
@@ -56,6 +61,7 @@ export const ETFS: EtfDef[] = [
     currency: 'CAD',
     price: 72.22,
     aum: '$3.1B',
+    totalHoldings: 7,
     holdings: ['RY.TO', 'TD.TO', 'BNS.TO', 'BMO.TO', 'CM.TO', 'NA.TO'],
   },
   {
@@ -64,6 +70,7 @@ export const ETFS: EtfDef[] = [
     currency: 'CAD',
     price: 26.46,
     aum: '$2.4B',
+    totalHoldings: 30,
     holdings: ['CNQ.TO', 'SU.TO', 'CVE.TO', 'ENB.TO', 'TRP.TO'],
   },
   {
@@ -72,6 +79,7 @@ export const ETFS: EtfDef[] = [
     currency: 'CAD',
     price: 91.37,
     aum: '$2.2B',
+    totalHoldings: 28,
     holdings: ['RY.TO', 'TD.TO', 'BNS.TO', 'BMO.TO', 'CM.TO', 'NA.TO', 'MFC.TO', 'SLF.TO', 'POW.TO', 'IFC.TO'],
   },
   {
@@ -80,6 +88,7 @@ export const ETFS: EtfDef[] = [
     currency: 'CAD',
     price: 51.75,
     aum: '$12.6B',
+    totalHoldings: 68,
     holdings: ['RY.TO', 'TD.TO', 'BNS.TO', 'BMO.TO', 'CM.TO', 'NA.TO', 'ENB.TO', 'TRP.TO', 'CNQ.TO', 'SU.TO', 'CVE.TO', 'BCE.TO', 'T.TO', 'MFC.TO', 'SLF.TO', 'POW.TO', 'IFC.TO', 'FTS.TO', 'NTR.TO', 'CNR.TO'],
   },
 ];
@@ -90,8 +99,8 @@ export interface EtfView {
   currency: string;
   price: number;
   aum: string;
-  holdingsCount: number;
-  recommendedCount: number; // how many holdings are on the current rec list
+  totalHoldings: number; // the fund's actual position count
+  recommendedCount: number; // how many of the fund's holdings are on the current rec list
   matches: string[]; // those recommended tickers
   action: Action | null; // blended from recommended holdings' price-vs-IV; null if none
   avgDiscount: number | null; // mean (IV-price)/IV across recommended holdings
@@ -120,7 +129,7 @@ export function buildEtfViews(recs: Recommendation[]): EtfView[] {
     const reason =
       matched.length === 0
         ? 'No current recommendations among its holdings.'
-        : `${matched.length} of ${etf.holdings.length} holdings are recommended` +
+        : `${matched.length} of ${etf.totalHoldings} fund holdings are recommended` +
           (avgDiscount !== null ? `; avg ${(avgDiscount * 100).toFixed(0)}% vs intrinsic value.` : '.');
 
     return {
@@ -129,14 +138,14 @@ export function buildEtfViews(recs: Recommendation[]): EtfView[] {
       currency: etf.currency,
       price: etf.price,
       aum: etf.aum,
-      holdingsCount: etf.holdings.length,
+      totalHoldings: etf.totalHoldings,
       recommendedCount: matched.length,
       matches: matched.map((r) => r.ticker),
       action,
       avgDiscount: avgDiscount === null ? null : Math.round(avgDiscount * 1000) / 1000,
       reason,
     };
-  }).sort((a, b) => b.recommendedCount - a.recommendedCount || b.holdingsCount - a.holdingsCount);
+  }).sort((a, b) => b.recommendedCount - a.recommendedCount || b.totalHoldings - a.totalHoldings);
 }
 
 // Build ETF views from the latest recommendations. Prices/AUM are pinned

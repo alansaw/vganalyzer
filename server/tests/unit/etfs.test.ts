@@ -16,7 +16,7 @@ describe('buildEtfViews', () => {
     const smh = views.find((v) => v.symbol === 'SMH')!;
     expect(smh.recommendedCount).toBe(3);
     expect(smh.matches.sort()).toEqual(['AVGO', 'NVDA', 'TXN']);
-    expect(smh.holdingsCount).toBeGreaterThan(3);
+    expect(smh.totalHoldings).toBe(26); // the fund's actual position count, not our mapped subset
   });
 
   it('derives Buy when recommended holdings average >=15% below IV', () => {
