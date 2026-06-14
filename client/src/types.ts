@@ -111,6 +111,20 @@ export interface EtfView {
   reason: string;
 }
 
+export interface OwnedEtf {
+  symbol: string;
+  name: string;
+  currency: string;
+  price: number;
+  aum: string | null;
+  category: string;
+}
+
+export interface EtfsResponse {
+  overlap: EtfView[];
+  owned: OwnedEtf[];
+}
+
 export interface PortfolioHistory {
   range: string;
   points: PricePoint[];

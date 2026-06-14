@@ -20,11 +20,12 @@ export function EtfsPage() {
       </header>
 
       <section className="card">
+        <h2>Recommendation overlap</h2>
         {etfs.isLoading ? (
           <Loading label="Loading ETFs…" />
         ) : etfs.isError ? (
           <ErrorState error={etfs.error} />
-        ) : !etfs.data || etfs.data.length === 0 ? (
+        ) : !etfs.data || etfs.data.overlap.length === 0 ? (
           <EmptyState>No ETF data available.</EmptyState>
         ) : (
           <div className="table-wrap">
@@ -40,7 +41,7 @@ export function EtfsPage() {
                 </tr>
               </thead>
               <tbody>
-                {etfs.data.map((e) => (
+                {etfs.data.overlap.map((e) => (
                   <tr key={e.symbol} data-testid="etf-row">
                     <td>
                       <span className="ticker-link">{e.symbol}</span>
@@ -84,6 +85,41 @@ export function EtfsPage() {
           </div>
         )}
       </section>
+
+      {etfs.data && etfs.data.owned.length > 0 && (
+        <section className="card">
+          <h2>My ETFs</h2>
+          <p className="muted small">
+            Funds you already own — mostly income / covered-call and broad-index ETFs. These aren't part
+            of the value screen, so there's no Buy/Hold/Sell call; shown for price and size reference.
+          </p>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>ETF</th>
+                  <th className="num">Price</th>
+                  <th className="num">AUM</th>
+                  <th>Category</th>
+                </tr>
+              </thead>
+              <tbody>
+                {etfs.data.owned.map((e) => (
+                  <tr key={e.symbol} data-testid="owned-etf-row">
+                    <td>
+                      <span className="ticker-link">{e.symbol}</span>
+                      <div className="muted small">{e.name}</div>
+                    </td>
+                    <td className="num">{money(e.price, e.currency)}</td>
+                    <td className="num">{e.aum ?? '—'}</td>
+                    <td className="muted small">{e.category}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
 
       <p className="muted small disclaimer">
         For research only — not investment advice. ETF prices and AUM are periodic snapshots; Action
