@@ -1,5 +1,6 @@
 import type {
   AuthInfo,
+  EtfView,
   HoldingScore,
   NewTransaction,
   PortfolioHistory,
@@ -55,6 +56,7 @@ export const api = {
     http<Transaction>('/transactions', { method: 'POST', body: JSON.stringify(tx) }),
   deleteTransaction: (id: number) =>
     http<void>(`/transactions/${id}`, { method: 'DELETE' }),
+  getEtfs: () => http<EtfView[]>('/etfs'),
   getRecommendations: () => http<Recommendation[]>('/recommendations'),
   refreshRecommendations: () =>
     http<Recommendation[]>('/recommendations/refresh', { method: 'POST' }),

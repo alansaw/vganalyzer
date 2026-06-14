@@ -33,6 +33,10 @@ export function useRecommendations() {
   return useQuery({ queryKey: ['recommendations'], queryFn: api.getRecommendations });
 }
 
+export function useEtfs() {
+  return useQuery({ queryKey: ['etfs'], queryFn: api.getEtfs });
+}
+
 export function useRefreshRecommendations() {
   const qc = useQueryClient();
   return useMutation({

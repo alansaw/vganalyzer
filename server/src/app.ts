@@ -10,6 +10,7 @@ import { transactionsRouter } from './routes/transactions.js';
 import { positionsRouter } from './routes/positions.js';
 import { portfolioRouter } from './routes/portfolio.js';
 import { recommendationsRouter } from './routes/recommendations.js';
+import { etfsRouter } from './routes/etfs.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -29,6 +30,7 @@ export function createApp(provider: MarketDataProvider): Express {
   app.use('/api/positions', positionsRouter(provider));
   app.use('/api/portfolio', portfolioRouter(provider));
   app.use('/api/recommendations', recommendationsRouter(provider));
+  app.use('/api/etfs', etfsRouter(provider));
 
   // In production the server also serves the built client (single Render service).
   if (process.env.NODE_ENV === 'production' || process.env.SERVE_CLIENT === 'true') {

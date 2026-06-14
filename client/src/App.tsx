@@ -4,6 +4,7 @@ import { PortfolioPage } from './pages/Portfolio';
 import { PositionDetailPage } from './pages/PositionDetail';
 import { RecommendationsPage } from './pages/Recommendations';
 import { GradesPage } from './pages/Grades';
+import { EtfsPage } from './pages/Etfs';
 import { MethodologyPage } from './pages/Methodology';
 
 function AppShell() {
@@ -28,6 +29,9 @@ function AppShell() {
           <NavLink to="/grades" className={({ isActive }) => (isActive ? 'active' : '')}>
             Grades
           </NavLink>
+          <NavLink to="/etfs" className={({ isActive }) => (isActive ? 'active' : '')}>
+            ETFs
+          </NavLink>
           <NavLink to="/methodology" className={({ isActive }) => (isActive ? 'active' : '')}>
             Methodology
           </NavLink>
@@ -47,6 +51,7 @@ function AppShell() {
           <Route path="/positions/:ticker" element={<PositionDetailPage />} />
           <Route path="/recommendations" element={<RecommendationsPage />} />
           <Route path="/grades" element={<GradesPage />} />
+          <Route path="/etfs" element={<EtfsPage />} />
           <Route path="/methodology" element={<MethodologyPage />} />
         </Routes>
       </main>

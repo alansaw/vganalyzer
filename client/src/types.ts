@@ -97,6 +97,20 @@ export interface HoldingScore {
   reason: string | null;
 }
 
+export interface EtfView {
+  symbol: string;
+  name: string;
+  currency: string;
+  price: number;
+  aum: string;
+  holdingsCount: number;
+  recommendedCount: number;
+  matches: string[];
+  action: 'Buy' | 'Sell' | 'Hold' | null;
+  avgDiscount: number | null;
+  reason: string;
+}
+
 export interface PortfolioHistory {
   range: string;
   points: PricePoint[];

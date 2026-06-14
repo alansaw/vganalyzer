@@ -355,6 +355,16 @@ tbody tr:hover {
   vertical-align: top;
 }
 
+/* ETF matched-holding chips */
+.etf-match {
+  color: var(--accent);
+  font-weight: 600;
+  margin-right: 6px;
+}
+.etf-match:hover {
+  text-decoration: underline;
+}
+
 /* Action badges (Portfolio open positions) */
 .action-badge {
   display: inline-block;
