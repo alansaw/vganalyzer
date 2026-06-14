@@ -18,8 +18,9 @@ const sample: EtfsResponse = {
     },
   ],
   owned: [
-    { symbol: 'SCHD', name: 'Schwab U.S. Dividend Equity ETF', currency: 'USD', price: 32.82, aum: '$95.2B', category: 'US dividend' },
-    { symbol: 'ZWC.TO', name: 'BMO Canadian High Dividend Covered Call ETF', currency: 'CAD', price: 22.57, aum: '$1.6B', category: 'CA covered-call income' },
+    { symbol: 'SCHD', name: 'Schwab U.S. Dividend Equity ETF', currency: 'USD', price: 32.82, aum: '$95.2B', category: 'US dividend', strategy: 'dividend', yield: 3.22, return1y: -17.7, totalReturn1y: null, action: null, reason: 'Broad/dividend fund — NAV-erosion signal not applicable.' },
+    { symbol: 'QQQI', name: 'NEOS Nasdaq-100 High Income ETF', currency: 'USD', price: 56.14, aum: '$12.0B', category: 'US covered-call income', strategy: 'covered-call', yield: 13.53, return1y: -8.4, totalReturn1y: 5.1, action: 'Hold', reason: '1y total return 5.1%' },
+    { symbol: 'IDVO', name: 'Amplify International Enhanced Dividend Income ETF', currency: 'USD', price: 42.85, aum: '$1.3B', category: 'Intl covered-call', strategy: 'covered-call', yield: 5.46, return1y: -20.8, totalReturn1y: -15.3, action: 'Sell', reason: 'distributions not covering NAV erosion' },
   ],
 };
 
@@ -47,17 +48,23 @@ describe('EtfsPage', () => {
     expect(within(rows[1]).getByText('—')).toBeInTheDocument();
   });
 
-  it('lists owned ETFs separately with price, AUM and category (no action)', async () => {
+  it('lists owned ETFs with yield/return and a NAV-erosion action where applicable', async () => {
     renderWithProviders(<EtfsPage />);
     await waitFor(() => expect(screen.getByText('My ETFs')).toBeInTheDocument());
 
     const owned = screen.getAllByTestId('owned-etf-row');
-    expect(owned).toHaveLength(2);
+    expect(owned).toHaveLength(3);
+
+    // Dividend fund: yield shown, but no action badge.
     const schd = within(owned[0]);
     expect(schd.getByText('SCHD')).toBeInTheDocument();
-    expect(schd.getByText('$32.82')).toBeInTheDocument();
-    expect(schd.getByText('US dividend')).toBeInTheDocument();
-    // owned section carries no Buy/Sell/Hold badge
+    expect(schd.getByText('3.2%')).toBeInTheDocument();
+    expect(schd.queryByText('Hold')).not.toBeInTheDocument();
+    expect(schd.queryByText('Sell')).not.toBeInTheDocument();
     expect(schd.queryByText('Buy')).not.toBeInTheDocument();
+
+    // Covered-call funds carry the NAV-erosion action.
+    expect(within(owned[1]).getByText('Hold')).toBeInTheDocument(); // QQQI total +5.1%
+    expect(within(owned[2]).getByText('Sell')).toBeInTheDocument(); // IDVO total -15.3%
   });
 });

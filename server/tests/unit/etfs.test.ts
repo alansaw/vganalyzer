@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { buildEtfViews } from '../../src/services/etfs.js';
+import { buildEtfViews, ownedEtfAction, type OwnedEtf } from '../../src/services/etfs.js';
 import type { Recommendation } from '../../src/services/recommendations.js';
+
+function owned(p: Partial<OwnedEtf>): OwnedEtf {
+  return {
+    symbol: 'X', name: 'X', currency: 'USD', price: 10, aum: '$1B', category: 'test',
+    strategy: 'covered-call', yield: 10, return1y: 0, ...p,
+  };
+}
 
 function rec(ticker: string, price: number, ivBase: number): Recommendation {
   return {
@@ -46,5 +53,42 @@ describe('buildEtfViews', () => {
     const smhIdx = views.findIndex((v) => v.symbol === 'SMH');
     const xleIdx = views.findIndex((v) => v.symbol === 'XLE');
     expect(smhIdx).toBeLessThan(xleIdx);
+  });
+});
+
+describe('ownedEtfAction (NAV-erosion signal)', () => {
+  it('Sells a covered-call fund whose distributions miss NAV decline (total return < 0)', () => {
+    const r = ownedEtfAction(owned({ strategy: 'covered-call', yield: 5.46, return1y: -20.8 }));
+    expect(r.action).toBe('Sell');
+    expect(r.totalReturn).toBeCloseTo(-15.3, 1);
+  });
+
+  it('Buys a covered-call fund with strong total return and NAV holding up', () => {
+    const r = ownedEtfAction(owned({ strategy: 'covered-call', yield: 5.56, return1y: 21.8 }));
+    expect(r.action).toBe('Buy');
+  });
+
+  it('Holds when income roughly offsets NAV erosion', () => {
+    const r = ownedEtfAction(owned({ strategy: 'covered-call', yield: 13.53, return1y: -8.4 }));
+    expect(r.action).toBe('Hold'); // total +5.1%, positive but NAV down past the -8 limit
+  });
+
+  it('requires a higher bar for leveraged-income funds', () => {
+    // total return 10% would Buy a normal fund, but a leveraged one only Holds (<12 bar)
+    const normal = ownedEtfAction(owned({ strategy: 'covered-call', yield: 5, return1y: 5 }));
+    const levered = ownedEtfAction(owned({ strategy: 'leveraged-income', yield: 5, return1y: 5 }));
+    expect(normal.action).toBe('Buy');
+    expect(levered.action).toBe('Hold');
+  });
+
+  it('Holds (flagged) covered-call funds with too little distribution history', () => {
+    const r = ownedEtfAction(owned({ strategy: 'covered-call', yield: 1.65, return1y: -8 }));
+    expect(r.action).toBe('Hold');
+    expect(r.reason).toMatch(/limited distribution history/i);
+  });
+
+  it('gives no action to dividend or broad funds', () => {
+    expect(ownedEtfAction(owned({ strategy: 'dividend', yield: 3.2, return1y: -17 })).action).toBeNull();
+    expect(ownedEtfAction(owned({ strategy: 'broad', yield: 1, return1y: -30 })).action).toBeNull();
   });
 });

@@ -118,6 +118,12 @@ export interface OwnedEtf {
   price: number;
   aum: string | null;
   category: string;
+  strategy: 'covered-call' | 'leveraged-income' | 'dividend' | 'broad';
+  yield: number;
+  return1y: number;
+  totalReturn1y: number | null;
+  action: 'Buy' | 'Sell' | 'Hold' | null;
+  reason: string;
 }
 
 export interface EtfsResponse {
