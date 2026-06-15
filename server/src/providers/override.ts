@@ -118,7 +118,9 @@ export class OverrideProvider implements MarketDataProvider {
     };
     return {
       ...merged,
-      price: o.price ?? merged.price,
+      // Live price wins; the pinned price is only a FALLBACK for when the base
+      // provider couldn't fetch one (so prices track the market, not a snapshot).
+      price: merged.price ?? o.price ?? null,
       pe: o.pe ?? merged.pe,
       forwardPe: o.forwardPe ?? merged.forwardPe,
       peg: o.peg ?? merged.peg,
@@ -128,13 +130,9 @@ export class OverrideProvider implements MarketDataProvider {
   }
 
   async getHistory(ticker: string, opts: HistoryOptions): Promise<PricePoint[]> {
-    const history = await this.base.getHistory(ticker, opts);
-    const price = this.overrideFor(ticker)?.price;
-    if (price === undefined || history.length === 0) return history;
-    const last = history[history.length - 1].close;
-    if (!last) return history;
-    // Scale so the series ends exactly at the override price; preserves shape.
-    const scale = price / last;
-    return history.map((p) => ({ date: p.date, close: Math.round(p.close * scale * 100) / 100 }));
+    // History now comes from a real source; the base series is authoritative and
+    // already ends at the latest close, so we no longer rescale it to a pinned
+    // price (that would drag a live chart back to a stale snapshot).
+    return this.base.getHistory(ticker, opts);
   }
 }

@@ -1,0 +1,123 @@
+import {
+  type HistoryOptions,
+  type MarketDataProvider,
+  type PricePoint,
+  type Quote,
+  num,
+} from './types.js';
+import { fetchStockAnalysisHistory } from './realHistory.js';
+
+// Live quotes from stockanalysis.com (no API key). Provides the LATEST price
+// (regular-session last, refreshing through the day), not just a frozen close.
+// History delegates to the existing real-history fetcher.
+//
+//   US:  /api/quotes/s/{SYM}            -> { data: { p, c, cp, u, ms, n, ... } }
+//   TSX: quote page embeds quote:{...}  (the quotes API rejects .TO symbols)
+
+const UA =
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36';
+
+const MAX_CONCURRENT = 4;
+let active = 0;
+const waiters: Array<() => void> = [];
+async function withSlot<T>(fn: () => Promise<T>): Promise<T> {
+  if (active >= MAX_CONCURRENT) await new Promise<void>((r) => waiters.push(r));
+  active++;
+  try {
+    return await fn();
+  } finally {
+    active--;
+    waiters.shift()?.();
+  }
+}
+
+async function getText(url: string): Promise<string> {
+  const res = await fetch(url, { headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(12_000) });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.text();
+}
+
+// The quotes API carries PRICE data only (no PE/EPS/name). That's by design
+// here: this provider supplies the live price; PE/PEG/EPS/IV come from the
+// manual overrides layered on top.
+interface SaQuote {
+  p?: number; // last price (regular session)
+}
+
+function toQuote(ticker: string, d: SaQuote, currency: string): Quote {
+  return {
+    ticker: ticker.toUpperCase(),
+    name: ticker.toUpperCase(),
+    price: num(d.p),
+    currency,
+    pe: null,
+    forwardPe: null,
+    peg: null,
+    eps: null,
+    marketCap: null,
+  };
+}
+
+export class StockAnalysisProvider implements MarketDataProvider {
+  async getQuote(ticker: string): Promise<Quote | null> {
+    return withSlot(async () => {
+      try {
+        if (ticker.endsWith('.TO')) return await this.fetchTsxQuote(ticker);
+        const text = await getText(`https://stockanalysis.com/api/quotes/s/${ticker.toLowerCase()}`);
+        const json = JSON.parse(text) as { status?: number; data?: SaQuote };
+        if (json.status === 200 && json.data && json.data.p != null) {
+          return toQuote(ticker, json.data, ticker.endsWith('.TO') ? 'CAD' : 'USD');
+        }
+        // Not a US listing (e.g. OTC like TCEHY) — try the OTC quote page.
+        return await this.fetchPageQuote(`https://stockanalysis.com/quote/otc/${ticker}/`, ticker, 'USD');
+      } catch (err) {
+        console.warn(`[stockanalysis] quote failed for ${ticker}: ${(err as Error).message}`);
+        return null;
+      }
+    });
+  }
+
+  async getQuotes(tickers: string[]): Promise<Quote[]> {
+    const results = await Promise.all(tickers.map((t) => this.getQuote(t)));
+    return results.filter((q): q is Quote => q !== null);
+  }
+
+  private async fetchTsxQuote(ticker: string): Promise<Quote | null> {
+    const base = ticker.slice(0, -3);
+    return this.fetchPageQuote(`https://stockanalysis.com/quote/tsx/${base}/`, ticker, 'CAD');
+  }
+
+  // Extract the embedded `quote:{...}` object from a quote page (TSX / OTC).
+  private async fetchPageQuote(url: string, ticker: string, currency: string): Promise<Quote | null> {
+    const html = await getText(url);
+    const m = html.match(/quote:\{([^}]*)\}/);
+    if (!m) return null;
+    const body = m[1];
+    const field = (k: string) => {
+      const mm = body.match(new RegExp(`(?:^|,)${k}:([0-9.-]+)`));
+      return mm ? Number(mm[1]) : undefined;
+    };
+    const price = field('p');
+    if (price == null) return null;
+    const nameMatch = html.match(/<title>([^<|]+)/);
+    return {
+      ticker: ticker.toUpperCase(),
+      name: nameMatch ? nameMatch[1].trim() : ticker.toUpperCase(),
+      price,
+      currency,
+      pe: null,
+      forwardPe: null,
+      peg: null,
+      eps: null,
+      marketCap: null,
+    };
+  }
+
+  getHistory(ticker: string, opts: HistoryOptions): Promise<PricePoint[]> {
+    return fetchStockAnalysisHistory(ticker).then((series) => {
+      const from = opts.from.toISOString().slice(0, 10);
+      const to = opts.to.toISOString().slice(0, 10);
+      return series.filter((p) => p.date >= from && p.date <= to);
+    });
+  }
+}

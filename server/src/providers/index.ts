@@ -1,6 +1,7 @@
 import { config } from '../config.js';
 import { MockProvider } from './mock.js';
 import { YahooProvider } from './yahoo.js';
+import { StockAnalysisProvider } from './stockAnalysis.js';
 import { OverrideProvider, loadOverrides } from './override.js';
 import { CachingProvider } from './cache.js';
 import { RealHistoryProvider } from './realHistory.js';
@@ -8,14 +9,20 @@ import type { MarketDataProvider } from './types.js';
 
 export function createProvider(name: 'yahoo' | 'mock' = config.provider): MarketDataProvider {
   // 1) Base upstream source.
-  let provider: MarketDataProvider = name === 'mock' ? new MockProvider() : new YahooProvider();
+  //   - mock: deterministic offline data (tests/E2E), wrapped so charts use real history.
+  //   - yahoo: LIVE quotes + history from stockanalysis.com (current price, not a
+  //     frozen snapshot). yahoo-finance2 stays available but is bypassed because
+  //     it rate-limits; StockAnalysisProvider is the live source we actually use.
+  let provider: MarketDataProvider;
+  if (name === 'mock') {
+    provider = new RealHistoryProvider(new MockProvider(), undefined, true);
+  } else {
+    void YahooProvider; // kept for reference / future use
+    provider = new StockAnalysisProvider();
+  }
 
-  // 1b) Real daily price history (stockanalysis.com). With the mock base it is
-  // the primary history source (no synthetic sine charts); with yahoo it is a
-  // rescue used only when yahoo returns nothing (rate limits).
-  provider = new RealHistoryProvider(provider, undefined, name === 'mock');
-
-  // 2) Cache upstream calls so repeated requests don't re-hit the API (rate-limit guard).
+  // 2) Cache upstream calls so repeated requests don't re-hit the API. Quote TTL
+  // is short so prices stay current intraday but bursts of page loads are cheap.
   provider = new CachingProvider(
     provider,
     config.quoteTtlMinutes * 60_000,
@@ -49,6 +56,7 @@ export type {
 export { isIntraday } from './types.js';
 export { MockProvider } from './mock.js';
 export { YahooProvider } from './yahoo.js';
+export { StockAnalysisProvider } from './stockAnalysis.js';
 export { OverrideProvider, loadOverrides } from './override.js';
 export { CachingProvider } from './cache.js';
 export { RealHistoryProvider } from './realHistory.js';
