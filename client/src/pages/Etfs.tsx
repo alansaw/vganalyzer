@@ -91,10 +91,11 @@ export function EtfsPage() {
           <h2>My ETFs</h2>
           <p className="muted small">
             Funds you already own. For covered-call / leveraged-income funds, Action reflects
-            <strong> NAV-erosion sustainability</strong>: 1-year total return (NAV change + yield).
-            Sell if distributions aren't covering NAV decline, Buy if total return is strong with NAV
-            holding up, else Hold. Dividend / broad-index funds show no Action (their price move is
-            market beta, not erosion).
+            <strong> NAV-erosion sustainability</strong>, judged from the authoritative 1-year total
+            return (distributions reinvested). NAV change ≈ total return − yield: Sell if total return
+            is negative, Hold if NAV is eroding (distributions partly return of capital), Buy if total
+            return is strong with NAV holding up. Dividend / broad-index funds show no Action (their
+            price move is market beta, not erosion).
           </p>
           <div className="table-wrap">
             <table>
@@ -104,8 +105,8 @@ export function EtfsPage() {
                   <th className="num">Price</th>
                   <th className="num">AUM</th>
                   <th className="num">Yield</th>
-                  <th className="num">1Y NAV</th>
-                  <th className="num">1Y total</th>
+                  <th className="num">1Y total return</th>
+                  <th className="num">1Y NAV (est.)</th>
                   <th>Action</th>
                   <th>Category</th>
                 </tr>
@@ -120,9 +121,11 @@ export function EtfsPage() {
                     <td className="num">{money(e.price, e.currency)}</td>
                     <td className="num">{e.aum ?? '—'}</td>
                     <td className="num">{e.yield.toFixed(1)}%</td>
-                    <td className={`num ${signClass(e.return1y)}`}>{e.return1y.toFixed(1)}%</td>
                     <td className={`num ${e.totalReturn1y == null ? '' : signClass(e.totalReturn1y)}`}>
                       {e.totalReturn1y == null ? '—' : `${e.totalReturn1y.toFixed(1)}%`}
+                    </td>
+                    <td className={`num ${e.navChange1y == null ? '' : signClass(e.navChange1y)}`}>
+                      {e.navChange1y == null ? '—' : `${e.navChange1y.toFixed(1)}%`}
                     </td>
                     <td>
                       {e.action ? (

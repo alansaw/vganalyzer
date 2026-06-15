@@ -18,9 +18,9 @@ const sample: EtfsResponse = {
     },
   ],
   owned: [
-    { symbol: 'SCHD', name: 'Schwab U.S. Dividend Equity ETF', currency: 'USD', price: 32.82, aum: '$95.2B', category: 'US dividend', strategy: 'dividend', yield: 3.22, return1y: -17.7, totalReturn1y: null, action: null, reason: 'Broad/dividend fund — NAV-erosion signal not applicable.' },
-    { symbol: 'QQQI', name: 'NEOS Nasdaq-100 High Income ETF', currency: 'USD', price: 56.14, aum: '$12.0B', category: 'US covered-call income', strategy: 'covered-call', yield: 13.53, return1y: -8.4, totalReturn1y: 5.1, action: 'Hold', reason: '1y total return 5.1%' },
-    { symbol: 'IDVO', name: 'Amplify International Enhanced Dividend Income ETF', currency: 'USD', price: 42.85, aum: '$1.3B', category: 'Intl covered-call', strategy: 'covered-call', yield: 5.46, return1y: -20.8, totalReturn1y: -15.3, action: 'Sell', reason: 'distributions not covering NAV erosion' },
+    { symbol: 'SCHD', name: 'Schwab U.S. Dividend Equity ETF', currency: 'USD', price: 32.82, aum: '$95.2B', category: 'US dividend', strategy: 'dividend', yield: 3.22, totalReturn1y: 26.71, navChange1y: null, action: null, reason: 'Broad/dividend fund — NAV-erosion signal not applicable.' },
+    { symbol: 'GPIX', name: 'Goldman Sachs S&P 500 Premium Income ETF', currency: 'USD', price: 54.97, aum: '$4.3B', category: 'US covered-call income', strategy: 'covered-call', yield: 7.97, totalReturn1y: 25.88, navChange1y: 17.9, action: 'Buy', reason: '1y total return 25.88% with NAV holding up' },
+    { symbol: 'ROCY', name: 'JPMorgan Equity Premium Yield ETF', currency: 'USD', price: 53.69, aum: null, category: 'US covered-call income', strategy: 'covered-call', yield: 1.62, totalReturn1y: null, navChange1y: null, action: 'Hold', reason: 'Too new — no 1-year total return yet to judge erosion.' },
   ],
 };
 
@@ -55,16 +55,17 @@ describe('EtfsPage', () => {
     const owned = screen.getAllByTestId('owned-etf-row');
     expect(owned).toHaveLength(3);
 
-    // Dividend fund: yield shown, but no action badge.
+    // Dividend fund: yield + total return shown, but no action badge.
     const schd = within(owned[0]);
     expect(schd.getByText('SCHD')).toBeInTheDocument();
     expect(schd.getByText('3.2%')).toBeInTheDocument();
+    expect(schd.getByText('26.7%')).toBeInTheDocument();
     expect(schd.queryByText('Hold')).not.toBeInTheDocument();
-    expect(schd.queryByText('Sell')).not.toBeInTheDocument();
     expect(schd.queryByText('Buy')).not.toBeInTheDocument();
 
-    // Covered-call funds carry the NAV-erosion action.
-    expect(within(owned[1]).getByText('Hold')).toBeInTheDocument(); // QQQI total +5.1%
-    expect(within(owned[2]).getByText('Sell')).toBeInTheDocument(); // IDVO total -15.3%
+    // Covered-call fund with strong total return + NAV holding up -> Buy.
+    expect(within(owned[1]).getByText('Buy')).toBeInTheDocument(); // GPIX +25.9%
+    // Too-new fund -> Hold (no 1y total return yet).
+    expect(within(owned[2]).getByText('Hold')).toBeInTheDocument(); // ROCY
   });
 });

@@ -120,8 +120,8 @@ export interface OwnedEtf {
   category: string;
   strategy: 'covered-call' | 'leveraged-income' | 'dividend' | 'broad';
   yield: number;
-  return1y: number;
   totalReturn1y: number | null;
+  navChange1y: number | null;
   action: 'Buy' | 'Sell' | 'Hold' | null;
   reason: string;
 }
