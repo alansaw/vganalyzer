@@ -107,19 +107,19 @@ export interface EtfView {
   reason: string;
 }
 
-// ETFs the user already owns. Listed separately from the overlap screen.
-// `strategy` drives whether a NAV-erosion Action applies:
-//  - covered-call / leveraged-income: distributions can exceed organic income,
-//    so NAV erosion is a real risk -> we score Buy/Hold/Sell.
-//  - dividend / broad: "NAV erosion" is just market beta -> no Action (shown
-//    for reference only), same reasoning as excluding broad funds from IV.
-// price/aum/yield/totalReturn1y are sourced snapshots (2026-06-15).
-// totalReturn1y is the AUTHORITATIVE 1-year total return (distributions
-// reinvested) as reported by the fund — NOT a price-only series. The 1-year NAV
-// (price) change is derived as totalReturn1y − yield, which is the correct way
-// to see erosion: a covered-call fund's price drops on every ex-dividend date,
-// so a price-only chart understates true return by ~a year of distributions.
+// ETFs the user already owns, scored with strategy-appropriate criteria:
+//  - covered-call / leveraged-income: NAV-erosion sustainability (is the fat
+//    distribution real income, or return of capital?), from total return.
+//  - dividend: capital appreciation AND stably growing distributions.
+//  - broad: capital appreciation / growth.
+// A SAFETY dimension (high/medium/low) tempers the call — notably, leverage
+// caps a leveraged fund at Hold no matter how strong the trailing return.
+// All figures are sourced snapshots (2026-06-15): totalReturn1y is the
+// AUTHORITATIVE 1-year total return (distributions reinvested), divGrowth is the
+// most recent annual distribution growth %, leverage is the gross exposure
+// factor (1.0 = unlevered).
 export type EtfStrategy = 'covered-call' | 'leveraged-income' | 'dividend' | 'broad';
+export type Safety = 'high' | 'medium' | 'low';
 
 export interface OwnedEtf {
   symbol: string;
@@ -131,97 +131,140 @@ export interface OwnedEtf {
   strategy: EtfStrategy;
   yield: number; // distribution yield %
   totalReturn1y: number | null; // 1-year total return %, distributions reinvested (null = too new)
+  divGrowth: number | null; // most recent annual distribution growth % (dividend funds)
+  leverage: number; // gross exposure factor; 1.0 = unlevered
 }
 
 export const OWNED_ETFS: OwnedEtf[] = [
-  { symbol: 'ROCY', name: 'JPMorgan Equity Premium Yield ETF', currency: 'USD', price: 53.69, aum: null, category: 'US covered-call income', strategy: 'covered-call', yield: 1.62, totalReturn1y: null },
-  { symbol: 'ROCQ', name: 'JPMorgan Nasdaq Equity Premium Yield ETF', currency: 'USD', price: 56.2, aum: null, category: 'US covered-call income', strategy: 'covered-call', yield: 2.03, totalReturn1y: null },
-  { symbol: 'GPIX', name: 'Goldman Sachs S&P 500 Premium Income ETF', currency: 'USD', price: 54.97, aum: '$4.3B', category: 'US covered-call income', strategy: 'covered-call', yield: 7.97, totalReturn1y: 25.88 },
-  { symbol: 'GPIQ', name: 'Goldman Sachs Nasdaq-100 Premium Income ETF', currency: 'USD', price: 58.05, aum: '$4.5B', category: 'US covered-call income', strategy: 'covered-call', yield: 9.3, totalReturn1y: 37.94 },
-  { symbol: 'SPYI', name: 'NEOS S&P 500 High Income ETF', currency: 'USD', price: 53.1, aum: '$10.0B', category: 'US covered-call income', strategy: 'covered-call', yield: 11.61, totalReturn1y: 22.82 },
-  { symbol: 'QQQI', name: 'NEOS Nasdaq-100 High Income ETF', currency: 'USD', price: 56.14, aum: '$12.0B', category: 'US covered-call income', strategy: 'covered-call', yield: 13.18, totalReturn1y: 30.39 },
-  { symbol: 'DIVO', name: 'Amplify CWP Enhanced Dividend Income ETF', currency: 'USD', price: 46.42, aum: '$7.2B', category: 'US dividend + covered-call', strategy: 'covered-call', yield: 6.33, totalReturn1y: 20.38 },
-  { symbol: 'QDVO', name: 'Amplify CWP Growth & Income ETF', currency: 'USD', price: 29.7, aum: '$0.7B', category: 'US dividend + covered-call', strategy: 'covered-call', yield: 10.25, totalReturn1y: 26.21 },
-  { symbol: 'IDVO', name: 'Amplify International Enhanced Dividend Income ETF', currency: 'USD', price: 42.85, aum: '$1.3B', category: 'Intl dividend + covered-call', strategy: 'covered-call', yield: 5.43, totalReturn1y: 36.09 },
-  { symbol: 'SCHD', name: 'Schwab U.S. Dividend Equity ETF', currency: 'USD', price: 32.82, aum: '$95.2B', category: 'US dividend', strategy: 'dividend', yield: 3.22, totalReturn1y: 26.71 },
-  { symbol: 'VGT', name: 'Vanguard Information Technology ETF', currency: 'USD', price: 116.74, aum: '$140.6B', category: 'US technology', strategy: 'broad', yield: 0.32, totalReturn1y: 55.5 },
-  { symbol: 'AGIX', name: 'KraneShares Artificial Intelligence & Technology ETF', currency: 'USD', price: 45.58, aum: '$0.9B', category: 'Global AI / technology', strategy: 'broad', yield: 0.92, totalReturn1y: 59.87 },
-  { symbol: 'VT', name: 'Vanguard Total World Stock ETF', currency: 'USD', price: 156.29, aum: '$74.1B', category: 'Global all-cap', strategy: 'broad', yield: 1.58, totalReturn1y: 29.74 },
-  { symbol: 'VTI', name: 'Vanguard Total Stock Market ETF', currency: 'USD', price: 366.36, aum: '$647.0B', category: 'US total market', strategy: 'broad', yield: 1.01, totalReturn1y: 28.65 },
-  { symbol: 'ZWU.TO', name: 'BMO Covered Call Utilities ETF', currency: 'CAD', price: 12.01, aum: '$2.2B', category: 'CA covered-call income', strategy: 'covered-call', yield: 6.99, totalReturn1y: 17.04 },
-  { symbol: 'ZWP.TO', name: 'BMO Europe High Dividend Covered Call ETF', currency: 'CAD', price: 20.85, aum: '$0.8B', category: 'Europe covered-call income', strategy: 'covered-call', yield: 6.07, totalReturn1y: 18.82 },
-  { symbol: 'ZWC.TO', name: 'BMO Canadian High Dividend Covered Call ETF', currency: 'CAD', price: 22.57, aum: '$1.6B', category: 'CA covered-call income', strategy: 'covered-call', yield: 5.56, totalReturn1y: 29.47 },
-  { symbol: 'HDIV.TO', name: 'Hamilton Enhanced Canadian Covered Call ETF', currency: 'CAD', price: 23.32, aum: '$0.4B', category: 'CA covered-call income (leveraged ~25%)', strategy: 'leveraged-income', yield: 9.27, totalReturn1y: 47.62 },
-  { symbol: 'HDIF.TO', name: 'Harvest Diversified Monthly Income ETF', currency: 'CAD', price: 9.47, aum: '$0.4B', category: 'CA covered-call income (leveraged ~25%)', strategy: 'leveraged-income', yield: 10.23, totalReturn1y: 30.3 },
-  { symbol: 'VDY.TO', name: 'Vanguard FTSE Canadian High Dividend Yield Index ETF', currency: 'CAD', price: 75.66, aum: '$2.5B', category: 'CA dividend', strategy: 'dividend', yield: 2.81, totalReturn1y: 50.74 },
-  { symbol: 'XEI.TO', name: 'iShares S&P/TSX Composite High Dividend Index ETF', currency: 'CAD', price: 39.59, aum: '$1.6B', category: 'CA dividend', strategy: 'dividend', yield: 3.49, totalReturn1y: 43.5 },
-  { symbol: 'XDIV.TO', name: 'iShares Core MSCI Canadian Quality Dividend Index ETF', currency: 'CAD', price: 44.21, aum: '$1.1B', category: 'CA dividend', strategy: 'dividend', yield: 3.21, totalReturn1y: 43.0 },
-  { symbol: 'CDZ.TO', name: 'iShares S&P/TSX Canadian Dividend Aristocrats Index ETF', currency: 'CAD', price: 46.26, aum: '$1.2B', category: 'CA dividend', strategy: 'dividend', yield: 3.03, totalReturn1y: 28.7 },
-  { symbol: 'VFV.TO', name: 'Vanguard S&P 500 Index ETF', currency: 'CAD', price: 184.57, aum: '$13.0B', category: 'US index (CAD)', strategy: 'broad', yield: 0.84, totalReturn1y: 31.66 },
-  { symbol: 'XEQT.TO', name: 'iShares Core Equity ETF Portfolio', currency: 'CAD', price: 44.68, aum: '$6.2B', category: 'Global all-equity', strategy: 'broad', yield: 1.48, totalReturn1y: 32.9 },
-  { symbol: 'XEG.TO', name: 'iShares S&P/TSX Capped Energy Index ETF', currency: 'CAD', price: 26.46, aum: '$2.4B', category: 'CA energy', strategy: 'broad', yield: 2.64, totalReturn1y: 46.84 },
+  { symbol: 'ROCY', name: 'JPMorgan Equity Premium Yield ETF', currency: 'USD', price: 53.69, aum: null, category: 'US covered-call income', strategy: 'covered-call', yield: 1.62, totalReturn1y: null, divGrowth: null, leverage: 1 },
+  { symbol: 'ROCQ', name: 'JPMorgan Nasdaq Equity Premium Yield ETF', currency: 'USD', price: 56.2, aum: null, category: 'US covered-call income', strategy: 'covered-call', yield: 2.03, totalReturn1y: null, divGrowth: null, leverage: 1 },
+  { symbol: 'GPIX', name: 'Goldman Sachs S&P 500 Premium Income ETF', currency: 'USD', price: 54.97, aum: '$4.3B', category: 'US covered-call income', strategy: 'covered-call', yield: 7.97, totalReturn1y: 25.88, divGrowth: null, leverage: 1 },
+  { symbol: 'GPIQ', name: 'Goldman Sachs Nasdaq-100 Premium Income ETF', currency: 'USD', price: 58.05, aum: '$4.5B', category: 'US covered-call income', strategy: 'covered-call', yield: 9.3, totalReturn1y: 37.94, divGrowth: null, leverage: 1 },
+  { symbol: 'SPYI', name: 'NEOS S&P 500 High Income ETF', currency: 'USD', price: 53.1, aum: '$10.0B', category: 'US covered-call income', strategy: 'covered-call', yield: 11.61, totalReturn1y: 22.82, divGrowth: null, leverage: 1 },
+  { symbol: 'QQQI', name: 'NEOS Nasdaq-100 High Income ETF', currency: 'USD', price: 56.14, aum: '$12.0B', category: 'US covered-call income', strategy: 'covered-call', yield: 13.18, totalReturn1y: 30.39, divGrowth: null, leverage: 1 },
+  { symbol: 'DIVO', name: 'Amplify CWP Enhanced Dividend Income ETF', currency: 'USD', price: 46.42, aum: '$7.2B', category: 'US dividend + covered-call', strategy: 'covered-call', yield: 6.33, totalReturn1y: 20.38, divGrowth: null, leverage: 1 },
+  { symbol: 'QDVO', name: 'Amplify CWP Growth & Income ETF', currency: 'USD', price: 29.7, aum: '$0.7B', category: 'US dividend + covered-call', strategy: 'covered-call', yield: 10.25, totalReturn1y: 26.21, divGrowth: null, leverage: 1 },
+  { symbol: 'IDVO', name: 'Amplify International Enhanced Dividend Income ETF', currency: 'USD', price: 42.85, aum: '$1.3B', category: 'Intl dividend + covered-call', strategy: 'covered-call', yield: 5.43, totalReturn1y: 36.09, divGrowth: null, leverage: 1 },
+  { symbol: 'SCHD', name: 'Schwab U.S. Dividend Equity ETF', currency: 'USD', price: 32.82, aum: '$95.2B', category: 'US dividend', strategy: 'dividend', yield: 3.22, totalReturn1y: 26.71, divGrowth: 1.56, leverage: 1 },
+  { symbol: 'VGT', name: 'Vanguard Information Technology ETF', currency: 'USD', price: 116.74, aum: '$140.6B', category: 'US technology', strategy: 'broad', yield: 0.32, totalReturn1y: 55.5, divGrowth: null, leverage: 1 },
+  { symbol: 'AGIX', name: 'KraneShares Artificial Intelligence & Technology ETF', currency: 'USD', price: 45.58, aum: '$0.9B', category: 'Global AI / technology', strategy: 'broad', yield: 0.92, totalReturn1y: 59.87, divGrowth: null, leverage: 1 },
+  { symbol: 'VT', name: 'Vanguard Total World Stock ETF', currency: 'USD', price: 156.29, aum: '$74.1B', category: 'Global all-cap', strategy: 'broad', yield: 1.58, totalReturn1y: 29.74, divGrowth: null, leverage: 1 },
+  { symbol: 'VTI', name: 'Vanguard Total Stock Market ETF', currency: 'USD', price: 366.36, aum: '$647.0B', category: 'US total market', strategy: 'broad', yield: 1.01, totalReturn1y: 28.65, divGrowth: null, leverage: 1 },
+  { symbol: 'ZWU.TO', name: 'BMO Covered Call Utilities ETF', currency: 'CAD', price: 12.01, aum: '$2.2B', category: 'CA covered-call income', strategy: 'covered-call', yield: 6.99, totalReturn1y: 17.04, divGrowth: null, leverage: 1 },
+  { symbol: 'ZWP.TO', name: 'BMO Europe High Dividend Covered Call ETF', currency: 'CAD', price: 20.85, aum: '$0.8B', category: 'Europe covered-call income', strategy: 'covered-call', yield: 6.07, totalReturn1y: 18.82, divGrowth: null, leverage: 1 },
+  { symbol: 'ZWC.TO', name: 'BMO Canadian High Dividend Covered Call ETF', currency: 'CAD', price: 22.57, aum: '$1.6B', category: 'CA covered-call income', strategy: 'covered-call', yield: 5.56, totalReturn1y: 29.47, divGrowth: null, leverage: 1 },
+  { symbol: 'HDIV.TO', name: 'Hamilton Enhanced Canadian Covered Call ETF', currency: 'CAD', price: 23.32, aum: '$0.4B', category: 'CA covered-call income (leveraged ~25%)', strategy: 'leveraged-income', yield: 9.27, totalReturn1y: 47.62, divGrowth: null, leverage: 1.25 },
+  { symbol: 'HDIF.TO', name: 'Harvest Diversified Monthly Income ETF', currency: 'CAD', price: 9.47, aum: '$0.4B', category: 'CA covered-call income (leveraged ~25%)', strategy: 'leveraged-income', yield: 10.23, totalReturn1y: 30.3, divGrowth: null, leverage: 1.25 },
+  { symbol: 'VDY.TO', name: 'Vanguard FTSE Canadian High Dividend Yield Index ETF', currency: 'CAD', price: 75.66, aum: '$2.5B', category: 'CA dividend', strategy: 'dividend', yield: 2.81, totalReturn1y: 50.74, divGrowth: 6.04, leverage: 1 },
+  { symbol: 'XEI.TO', name: 'iShares S&P/TSX Composite High Dividend Index ETF', currency: 'CAD', price: 39.59, aum: '$1.6B', category: 'CA dividend', strategy: 'dividend', yield: 3.49, totalReturn1y: 43.5, divGrowth: -8.72, leverage: 1 },
+  { symbol: 'XDIV.TO', name: 'iShares Core MSCI Canadian Quality Dividend Index ETF', currency: 'CAD', price: 44.21, aum: '$1.1B', category: 'CA dividend', strategy: 'dividend', yield: 3.21, totalReturn1y: 43.0, divGrowth: 8.81, leverage: 1 },
+  { symbol: 'CDZ.TO', name: 'iShares S&P/TSX Canadian Dividend Aristocrats Index ETF', currency: 'CAD', price: 46.26, aum: '$1.2B', category: 'CA dividend', strategy: 'dividend', yield: 3.03, totalReturn1y: 28.7, divGrowth: 2.89, leverage: 1 },
+  { symbol: 'VFV.TO', name: 'Vanguard S&P 500 Index ETF', currency: 'CAD', price: 184.57, aum: '$13.0B', category: 'US index (CAD)', strategy: 'broad', yield: 0.84, totalReturn1y: 31.66, divGrowth: null, leverage: 1 },
+  { symbol: 'XEQT.TO', name: 'iShares Core Equity ETF Portfolio', currency: 'CAD', price: 44.68, aum: '$6.2B', category: 'Global all-equity', strategy: 'broad', yield: 1.48, totalReturn1y: 32.9, divGrowth: null, leverage: 1 },
+  { symbol: 'XEG.TO', name: 'iShares S&P/TSX Capped Energy Index ETF', currency: 'CAD', price: 26.46, aum: '$2.4B', category: 'CA energy', strategy: 'broad', yield: 2.64, totalReturn1y: 46.84, divGrowth: null, leverage: 1 },
 ];
 
 export interface OwnedEtfView extends OwnedEtf {
   navChange1y: number | null; // derived: totalReturn1y − yield (≈ price/NAV change)
+  safety: Safety;
   action: Action | null;
   reason: string;
 }
 
-// NAV-erosion sustainability for income funds, from AUTHORITATIVE total return:
-//   navChange ≈ totalReturn − yield   (the real price/NAV trend)
-//  - Sell: total return < 0 (you lost money even with distributions reinvested)
-//  - Hold: NAV eroding past the limit (distributions outrunning earnings —
-//          partly return of capital), even if total return is positive
-//  - Buy:  total return clears the bar AND NAV is holding up
-// Leveraged funds use a higher Buy bar. Dividend/broad funds get no Action
-// (their price move is market beta, not erosion). Null total return = too new.
 const NAV_EROSION_LIMIT = -5; // 1y NAV decline worse than this = erosion concern
+const INCOME_BUY_BAR = 8; // covered-call total-return bar for Buy
+const LEV_BUY_BAR = 12; // leveraged funds need more to justify the risk
+const BROAD_BUY_BAR = 12; // broad/index capital-appreciation bar for Buy
+const DIV_BUY_BAR = 8; // dividend-fund total-return bar for Buy
+const DIV_CUT_LIMIT = -10; // distribution growth worse than this = income not "stable"
 
-export function ownedEtfAction(e: OwnedEtf): { action: Action | null; navChange: number | null; reason: string } {
-  if (e.strategy !== 'covered-call' && e.strategy !== 'leveraged-income') {
-    return { action: null, navChange: null, reason: 'Broad/dividend fund — NAV-erosion signal not applicable.' };
+function aumBillions(aum: string | null): number | null {
+  if (!aum) return null;
+  const m = aum.match(/([0-9.]+)\s*([BMT])/i);
+  if (!m) return null;
+  const mult = m[2].toUpperCase() === 'T' ? 1000 : m[2].toUpperCase() === 'M' ? 0.001 : 1;
+  return parseFloat(m[1]) * mult;
+}
+
+// Safety rating: leverage is the dominant risk (borrowed money amplifies
+// drawdowns); then fund size (tiny/unknown funds carry closure/liquidity risk);
+// then strategy (broad/dividend index funds are the most robust).
+export function safetyFor(e: OwnedEtf): { safety: Safety; note: string } {
+  if (e.leverage > 1.1) {
+    return { safety: 'low', note: `leveraged ~${Math.round((e.leverage - 1) * 100)}% — amplified drawdowns` };
   }
+  const aum = aumBillions(e.aum);
+  if (aum === null) return { safety: 'medium', note: 'limited size/track record' };
+  if (aum < 1) return { safety: 'medium', note: 'small fund (<$1B AUM)' };
+  if (e.strategy === 'broad' || e.strategy === 'dividend') {
+    return { safety: 'high', note: 'large, diversified, unlevered' };
+  }
+  return { safety: 'medium', note: 'covered-call caps upside but unlevered' };
+}
+
+// Strategy-appropriate Buy/Hold/Sell, then a safety overlay (low safety caps a
+// Buy at Hold — this is what keeps leveraged HDIV/HDIF out of Buy).
+export function ownedEtfAction(e: OwnedEtf): {
+  action: Action | null;
+  navChange: number | null;
+  safety: Safety;
+  reason: string;
+} {
+  const { safety, note: safetyNote } = safetyFor(e);
+  const navChange = e.totalReturn1y === null ? null : Math.round((e.totalReturn1y - e.yield) * 10) / 10;
+
+  const base = baseAction(e, navChange);
+  let { action, reason } = base;
+
+  // Safety overlay: never recommend Buy on a low-safety (leveraged) fund.
+  if (action === 'Buy' && safety === 'low') {
+    action = 'Hold';
+    reason = `Strong trailing return but ${safetyNote}; size position with caution rather than add. (${reason})`;
+  }
+  return { action, navChange, safety, reason };
+}
+
+function baseAction(e: OwnedEtf, navChange: number | null): { action: Action | null; reason: string } {
   if (e.totalReturn1y === null) {
-    return { action: 'Hold', navChange: null, reason: 'Too new — no 1-year total return yet to judge erosion.' };
+    return { action: 'Hold', reason: 'Too new — no 1-year total return yet to judge.' };
   }
-  const navChange = Math.round((e.totalReturn1y - e.yield) * 10) / 10;
-  const leveraged = e.strategy === 'leveraged-income';
-  const buyBar = leveraged ? 12 : 8;
-  const lev = leveraged ? ' (leveraged — amplified risk)' : '';
+  const tr = e.totalReturn1y;
 
-  if (e.totalReturn1y < 0) {
-    return {
-      action: 'Sell',
-      navChange,
-      reason: `1y total return ${e.totalReturn1y}% — negative even with the ${e.yield}% distribution; capital eroding${lev}.`,
-    };
+  // Covered-call & leveraged-income: NAV-erosion sustainability.
+  if (e.strategy === 'covered-call' || e.strategy === 'leveraged-income') {
+    const leveraged = e.strategy === 'leveraged-income';
+    const buyBar = leveraged ? LEV_BUY_BAR : INCOME_BUY_BAR;
+    if (tr < 0) return { action: 'Sell', reason: `1y total return ${tr}% — negative even with the ${e.yield}% distribution; capital eroding.` };
+    if (navChange !== null && navChange < NAV_EROSION_LIMIT)
+      return { action: 'Hold', reason: `NAV down ~${navChange}% ex-distributions: payout partly return of capital.` };
+    if (tr >= buyBar) return { action: 'Buy', reason: `1y total return ${tr}% with NAV holding up (~${navChange}% ex-distributions).` };
+    return { action: 'Hold', reason: `1y total return ${tr}% — positive but modest.` };
   }
-  if (navChange < NAV_EROSION_LIMIT) {
-    return {
-      action: 'Hold',
-      navChange,
-      reason: `NAV down ~${navChange}% (total ${e.totalReturn1y}% − ${e.yield}% yield): distributions partly return of capital${lev}.`,
-    };
+
+  // Dividend funds: capital appreciation AND stably growing income.
+  if (e.strategy === 'dividend') {
+    const g = e.divGrowth;
+    if (tr < 0) return { action: 'Sell', reason: `1y total return ${tr}% — capital not appreciating.` };
+    if (g !== null && g < DIV_CUT_LIMIT)
+      return { action: 'Sell', reason: `Distribution cut ${g}% — income not stable, despite ${tr}% total return.` };
+    if (tr >= DIV_BUY_BAR && g !== null && g >= 0)
+      return { action: 'Buy', reason: `1y total return ${tr}% with distribution growing ${g}% — appreciation + rising income.` };
+    if (tr >= DIV_BUY_BAR && g === null)
+      return { action: 'Buy', reason: `1y total return ${tr}%; distribution growth not available.` };
+    return { action: 'Hold', reason: `1y total return ${tr}%${g !== null ? `, distribution growth ${g}%` : ''} — income flat or returns modest.` };
   }
-  if (e.totalReturn1y >= buyBar) {
-    return {
-      action: 'Buy',
-      navChange,
-      reason: `1y total return ${e.totalReturn1y}% with NAV holding up (~${navChange}% ex-distributions)${lev}.`,
-    };
-  }
-  return {
-    action: 'Hold',
-    navChange,
-    reason: `1y total return ${e.totalReturn1y}% — positive but modest${lev}.`,
+
+  // Broad / index funds: capital appreciation / growth.
+  if (tr < 0) return { action: 'Sell', reason: `1y total return ${tr}% — no capital appreciation.` };
+  if (tr >= BROAD_BUY_BAR) return { action: 'Buy', reason: `1y total return ${tr}% — strong capital appreciation.` };
+  return { action: 'Hold', reason: `1y total return ${tr}% — modest appreciation.`
   };
 }
 
 export function buildOwnedViews(): OwnedEtfView[] {
   return OWNED_ETFS.map((e) => {
-    const { action, navChange, reason } = ownedEtfAction(e);
-    return { ...e, action, navChange1y: navChange, reason };
+    const { action, navChange, safety, reason } = ownedEtfAction(e);
+    return { ...e, action, navChange1y: navChange, safety, reason };
   });
 }
 

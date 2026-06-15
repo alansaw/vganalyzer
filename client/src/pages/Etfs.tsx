@@ -90,12 +90,12 @@ export function EtfsPage() {
         <section className="card">
           <h2>My ETFs</h2>
           <p className="muted small">
-            Funds you already own. For covered-call / leveraged-income funds, Action reflects
-            <strong> NAV-erosion sustainability</strong>, judged from the authoritative 1-year total
-            return (distributions reinvested). NAV change ≈ total return − yield: Sell if total return
-            is negative, Hold if NAV is eroding (distributions partly return of capital), Buy if total
-            return is strong with NAV holding up. Dividend / broad-index funds show no Action (their
-            price move is market beta, not erosion).
+            Funds you already own, each judged by strategy: <strong>covered-call</strong> funds on
+            NAV-erosion sustainability (is the distribution real income or return of capital?),
+            <strong> dividend</strong> funds on capital appreciation + stable/growing distributions, and
+            <strong> broad/index</strong> funds on capital appreciation. <strong>Safety</strong> tempers
+            the call — leveraged funds are capped at Hold regardless of trailing return. All from the
+            authoritative 1-year total return (distributions reinvested).
           </p>
           <div className="table-wrap">
             <table>
@@ -105,10 +105,11 @@ export function EtfsPage() {
                   <th className="num">Price</th>
                   <th className="num">AUM</th>
                   <th className="num">Yield</th>
-                  <th className="num">1Y total return</th>
-                  <th className="num">1Y NAV (est.)</th>
+                  <th className="num">Div growth</th>
+                  <th className="num">1Y total</th>
+                  <th className="num">1Y NAV</th>
+                  <th>Safety</th>
                   <th>Action</th>
-                  <th>Category</th>
                 </tr>
               </thead>
               <tbody>
@@ -121,11 +122,17 @@ export function EtfsPage() {
                     <td className="num">{money(e.price, e.currency)}</td>
                     <td className="num">{e.aum ?? '—'}</td>
                     <td className="num">{e.yield.toFixed(1)}%</td>
+                    <td className={`num ${e.divGrowth == null ? '' : signClass(e.divGrowth)}`}>
+                      {e.divGrowth == null ? '—' : `${e.divGrowth.toFixed(1)}%`}
+                    </td>
                     <td className={`num ${e.totalReturn1y == null ? '' : signClass(e.totalReturn1y)}`}>
                       {e.totalReturn1y == null ? '—' : `${e.totalReturn1y.toFixed(1)}%`}
                     </td>
                     <td className={`num ${e.navChange1y == null ? '' : signClass(e.navChange1y)}`}>
                       {e.navChange1y == null ? '—' : `${e.navChange1y.toFixed(1)}%`}
+                    </td>
+                    <td>
+                      <span className={`safety-badge safety-${e.safety}`}>{e.safety}</span>
                     </td>
                     <td>
                       {e.action ? (
@@ -138,7 +145,6 @@ export function EtfsPage() {
                         </span>
                       )}
                     </td>
-                    <td className="muted small">{e.category}</td>
                   </tr>
                 ))}
               </tbody>

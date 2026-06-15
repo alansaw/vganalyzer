@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { buildEtfViews, ownedEtfAction, type OwnedEtf } from '../../src/services/etfs.js';
+import { buildEtfViews, ownedEtfAction, safetyFor, type OwnedEtf } from '../../src/services/etfs.js';
 import type { Recommendation } from '../../src/services/recommendations.js';
 
 function owned(p: Partial<OwnedEtf>): OwnedEtf {
   return {
-    symbol: 'X', name: 'X', currency: 'USD', price: 10, aum: '$1B', category: 'test',
-    strategy: 'covered-call', yield: 10, totalReturn1y: 0, ...p,
+    symbol: 'X', name: 'X', currency: 'USD', price: 10, aum: '$5B', category: 'test',
+    strategy: 'covered-call', yield: 10, totalReturn1y: 0, divGrowth: null, leverage: 1, ...p,
   };
 }
 
@@ -82,22 +82,62 @@ describe('ownedEtfAction (NAV-erosion signal, from total return)', () => {
     expect(r.reason).toMatch(/return of capital/i);
   });
 
-  it('requires a higher total-return bar for leveraged-income funds', () => {
-    // total 10%, yield 2% => NAV +8% (fine), but 10% < 12% leveraged Buy bar -> Hold
-    const normal = ownedEtfAction(owned({ strategy: 'covered-call', yield: 2, totalReturn1y: 10 }));
-    const levered = ownedEtfAction(owned({ strategy: 'leveraged-income', yield: 2, totalReturn1y: 10 }));
-    expect(normal.action).toBe('Buy');
-    expect(levered.action).toBe('Hold');
-  });
-
   it('Holds (flagged) funds too new to have a 1-year total return', () => {
     const r = ownedEtfAction(owned({ strategy: 'covered-call', yield: 1.62, totalReturn1y: null }));
     expect(r.action).toBe('Hold');
     expect(r.reason).toMatch(/too new/i);
   });
+});
 
-  it('gives no action to dividend or broad funds', () => {
-    expect(ownedEtfAction(owned({ strategy: 'dividend', yield: 3.2, totalReturn1y: 26 })).action).toBeNull();
-    expect(ownedEtfAction(owned({ strategy: 'broad', yield: 1, totalReturn1y: 55 })).action).toBeNull();
+describe('ownedEtfAction (safety overlay & leverage)', () => {
+  it('caps a leveraged fund at Hold despite a huge total return (real HDIV)', () => {
+    const r = ownedEtfAction(owned({ strategy: 'leveraged-income', yield: 9.27, totalReturn1y: 47.62, leverage: 1.25 }));
+    expect(r.safety).toBe('low');
+    expect(r.action).toBe('Hold'); // would otherwise clear the Buy bar
+    expect(r.reason).toMatch(/leverag/i);
+  });
+
+  it('rates unlevered large diversified funds as high safety', () => {
+    expect(safetyFor(owned({ strategy: 'broad', aum: '$647B', leverage: 1 })).safety).toBe('high');
+    expect(safetyFor(owned({ strategy: 'dividend', aum: '$95B', leverage: 1 })).safety).toBe('high');
+  });
+
+  it('rates small (<$1B) or unknown-size funds as medium safety', () => {
+    expect(safetyFor(owned({ aum: '$0.4B' })).safety).toBe('medium');
+    expect(safetyFor(owned({ aum: null })).safety).toBe('medium');
+  });
+});
+
+describe('ownedEtfAction (dividend funds: appreciation + stable income)', () => {
+  it('Buys when appreciating with growing distributions (real SCHD)', () => {
+    const r = ownedEtfAction(owned({ strategy: 'dividend', aum: '$95B', yield: 3.22, totalReturn1y: 26.71, divGrowth: 1.56 }));
+    expect(r.action).toBe('Buy');
+    expect(r.reason).toMatch(/rising income|appreciation/i);
+  });
+
+  it('Sells a dividend fund that cut its distribution materially', () => {
+    const r = ownedEtfAction(owned({ strategy: 'dividend', aum: '$2B', yield: 4, totalReturn1y: 15, divGrowth: -12 }));
+    expect(r.action).toBe('Sell');
+    expect(r.reason).toMatch(/cut/i);
+  });
+
+  it('Holds a dividend fund with flat income / modest return', () => {
+    const r = ownedEtfAction(owned({ strategy: 'dividend', aum: '$2B', yield: 3, totalReturn1y: 4, divGrowth: 1 }));
+    expect(r.action).toBe('Hold');
+  });
+});
+
+describe('ownedEtfAction (broad funds: capital appreciation)', () => {
+  it('Buys broad funds with strong appreciation (real VTI/VGT)', () => {
+    expect(ownedEtfAction(owned({ strategy: 'broad', aum: '$647B', totalReturn1y: 28.65 })).action).toBe('Buy');
+    expect(ownedEtfAction(owned({ strategy: 'broad', aum: '$140B', totalReturn1y: 55.5 })).action).toBe('Buy');
+  });
+
+  it('Sells a broad fund that lost money over the year', () => {
+    expect(ownedEtfAction(owned({ strategy: 'broad', aum: '$10B', totalReturn1y: -6 })).action).toBe('Sell');
+  });
+
+  it('Holds a broad fund with only modest appreciation', () => {
+    expect(ownedEtfAction(owned({ strategy: 'broad', aum: '$10B', totalReturn1y: 5 })).action).toBe('Hold');
   });
 });

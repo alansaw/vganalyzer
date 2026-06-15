@@ -122,6 +122,9 @@ export interface OwnedEtf {
   yield: number;
   totalReturn1y: number | null;
   navChange1y: number | null;
+  divGrowth: number | null;
+  leverage: number;
+  safety: 'high' | 'medium' | 'low';
   action: 'Buy' | 'Sell' | 'Hold' | null;
   reason: string;
 }

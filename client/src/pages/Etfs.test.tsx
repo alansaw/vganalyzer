@@ -18,9 +18,9 @@ const sample: EtfsResponse = {
     },
   ],
   owned: [
-    { symbol: 'SCHD', name: 'Schwab U.S. Dividend Equity ETF', currency: 'USD', price: 32.82, aum: '$95.2B', category: 'US dividend', strategy: 'dividend', yield: 3.22, totalReturn1y: 26.71, navChange1y: null, action: null, reason: 'Broad/dividend fund — NAV-erosion signal not applicable.' },
-    { symbol: 'GPIX', name: 'Goldman Sachs S&P 500 Premium Income ETF', currency: 'USD', price: 54.97, aum: '$4.3B', category: 'US covered-call income', strategy: 'covered-call', yield: 7.97, totalReturn1y: 25.88, navChange1y: 17.9, action: 'Buy', reason: '1y total return 25.88% with NAV holding up' },
-    { symbol: 'ROCY', name: 'JPMorgan Equity Premium Yield ETF', currency: 'USD', price: 53.69, aum: null, category: 'US covered-call income', strategy: 'covered-call', yield: 1.62, totalReturn1y: null, navChange1y: null, action: 'Hold', reason: 'Too new — no 1-year total return yet to judge erosion.' },
+    { symbol: 'GPIX', name: 'Goldman Sachs S&P 500 Premium Income ETF', currency: 'USD', price: 54.97, aum: '$4.3B', category: 'US covered-call income', strategy: 'covered-call', yield: 7.97, totalReturn1y: 25.88, navChange1y: 17.9, divGrowth: null, leverage: 1, safety: 'medium', action: 'Buy', reason: '1y total return 25.88% with NAV holding up' },
+    { symbol: 'SCHD', name: 'Schwab U.S. Dividend Equity ETF', currency: 'USD', price: 32.82, aum: '$95.2B', category: 'US dividend', strategy: 'dividend', yield: 3.22, totalReturn1y: 26.71, navChange1y: 23.5, divGrowth: 1.56, leverage: 1, safety: 'high', action: 'Buy', reason: 'appreciation + rising income' },
+    { symbol: 'HDIV.TO', name: 'Hamilton Enhanced Canadian Covered Call ETF', currency: 'CAD', price: 23.32, aum: '$0.4B', category: 'CA covered-call (leveraged)', strategy: 'leveraged-income', yield: 9.27, totalReturn1y: 47.62, navChange1y: 38.3, divGrowth: null, leverage: 1.25, safety: 'low', action: 'Hold', reason: 'Strong trailing return but leveraged ~25%' },
   ],
 };
 
@@ -55,17 +55,22 @@ describe('EtfsPage', () => {
     const owned = screen.getAllByTestId('owned-etf-row');
     expect(owned).toHaveLength(3);
 
-    // Dividend fund: yield + total return shown, but no action badge.
-    const schd = within(owned[0]);
-    expect(schd.getByText('SCHD')).toBeInTheDocument();
-    expect(schd.getByText('3.2%')).toBeInTheDocument();
-    expect(schd.getByText('26.7%')).toBeInTheDocument();
-    expect(schd.queryByText('Hold')).not.toBeInTheDocument();
-    expect(schd.queryByText('Buy')).not.toBeInTheDocument();
+    // Covered-call fund with strong total return + NAV holding up -> Buy, medium safety.
+    const gpix = within(owned[0]);
+    expect(gpix.getByText('GPIX')).toBeInTheDocument();
+    expect(gpix.getByText('Buy')).toBeInTheDocument();
+    expect(gpix.getByText('medium')).toBeInTheDocument();
 
-    // Covered-call fund with strong total return + NAV holding up -> Buy.
-    expect(within(owned[1]).getByText('Buy')).toBeInTheDocument(); // GPIX +25.9%
-    // Too-new fund -> Hold (no 1y total return yet).
-    expect(within(owned[2]).getByText('Hold')).toBeInTheDocument(); // ROCY
+    // Dividend fund now gets an action (appreciation + rising income) -> Buy, high safety.
+    const schd = within(owned[1]);
+    expect(schd.getByText('Buy')).toBeInTheDocument();
+    expect(schd.getByText('high')).toBeInTheDocument();
+    expect(schd.getByText('1.6%')).toBeInTheDocument(); // div growth shown
+
+    // Leveraged fund: low safety caps it at Hold despite +47.6% total return.
+    const hdiv = within(owned[2]);
+    expect(hdiv.getByText('Hold')).toBeInTheDocument();
+    expect(hdiv.getByText('low')).toBeInTheDocument();
+    expect(hdiv.queryByText('Buy')).not.toBeInTheDocument();
   });
 });
