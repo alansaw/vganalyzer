@@ -54,7 +54,7 @@ export function RecommendationsPage() {
                   <th className="num">Fwd P/E</th>
                   <th className="num">PEG</th>
                   <th className="num">3-mo</th>
-                  <th>Why</th>
+                  <th className="col-why">Why</th>
                 </tr>
               </thead>
               <tbody>
@@ -98,7 +98,7 @@ export function RecommendationsPage() {
                     <td className="num">{ratio(r.forwardPe, 1)}</td>
                     <td className="num">{ratio(r.peg)}</td>
                     <td className={`num ${signClass(r.momentum3m)}`}>{percent(r.momentum3m)}</td>
-                    <td className="muted small">{r.rationale}</td>
+                    <td className="muted small col-why">{r.rationale}</td>
                   </tr>
                 ))}
               </tbody>

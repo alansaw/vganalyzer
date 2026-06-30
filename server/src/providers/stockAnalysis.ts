@@ -31,6 +31,20 @@ async function withSlot<T>(fn: () => Promise<T>): Promise<T> {
   }
 }
 
+// Page titles look like "Suncor Energy (TSX:SU) Stock Price & Overview".
+// Keep just the company name, strip the exchange tag/suffix, decode entities.
+export function cleanName(raw: string | undefined, ticker: string): string {
+  if (!raw) return ticker.toUpperCase();
+  let n = raw
+    .replace(/\s*\((?:TSX|NYSE|NASDAQ|OTC|NEO)[:-][^)]*\)\s*/i, ' ')
+    .replace(/\s*[-|]?\s*(Stock Price|Price|Quote|Overview|& Overview).*$/i, '')
+    .replace(/&amp;/g, '&')
+    .replace(/&#39;|&apos;/g, "'")
+    .replace(/&quot;/g, '"')
+    .trim();
+  return n || ticker.toUpperCase();
+}
+
 async function getText(url: string): Promise<string> {
   const res = await fetch(url, { headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(12_000) });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -102,7 +116,7 @@ export class StockAnalysisProvider implements MarketDataProvider {
     const nameMatch = html.match(/<title>([^<|]+)/);
     return {
       ticker: ticker.toUpperCase(),
-      name: nameMatch ? nameMatch[1].trim() : ticker.toUpperCase(),
+      name: cleanName(nameMatch?.[1], ticker),
       price,
       currency,
       pe: null,

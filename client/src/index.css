@@ -16,6 +16,10 @@
   box-sizing: border-box;
 }
 
+html {
+  -webkit-text-size-adjust: 100%; /* don't let iOS auto-inflate text */
+}
+
 body {
   margin: 0;
   background: var(--bg);
@@ -23,6 +27,7 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   font-size: 14px;
   line-height: 1.5;
+  overflow-x: hidden; /* nothing should force a horizontal scroll on the whole page */
 }
 
 a {
@@ -603,6 +608,7 @@ tbody tr:hover {
 @media (max-width: 760px) {
   .stat-grid {
     grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
   }
   .tx-grid {
     grid-template-columns: 1fr 1fr;
@@ -611,6 +617,114 @@ tbody tr:hover {
     grid-column: span 2;
   }
   .content {
-    padding: 16px;
+    padding: 16px 12px;
+  }
+}
+
+/* Phone layout */
+@media (max-width: 640px) {
+  /* Nav: brand on top, tabs become a horizontal-scroll strip below it. */
+  .topnav {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 12px 12px 0;
+  }
+  .brand .tagline {
+    display: none;
+  }
+  .brand .logo {
+    width: 32px;
+    height: 32px;
+  }
+  .nav-links {
+    gap: 4px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 8px;
+  }
+  .nav-links::-webkit-scrollbar {
+    display: none;
+  }
+  .nav-links a {
+    padding: 8px 12px;
+    white-space: nowrap;
+    flex: 0 0 auto;
+  }
+  .auth-controls {
+    margin-left: auto;
+    padding-left: 8px;
+  }
+
+  /* Page headers stack; action buttons go full width and easy to tap. */
+  .page-head {
+    flex-direction: column;
+    gap: 12px;
+  }
+  .page-head h1 {
+    font-size: 22px;
+  }
+  .head-actions {
+    width: 100%;
+  }
+  .head-actions .btn {
+    flex: 1;
+  }
+  .card-head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  /* Cards: less padding, single-column stats. */
+  .card {
+    padding: 14px;
+  }
+  .stat-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .stat-value {
+    font-size: 18px;
+  }
+
+  /* Tables: keep them scrollable, but tighten so more fits and they don't blow
+     out the viewport. The wrapper already scrolls; momentum-scroll on iOS. */
+  .table-wrap {
+    -webkit-overflow-scrolling: touch;
+    margin: 0 -14px; /* let the table use the full card width */
+  }
+  table {
+    font-size: 13px;
+  }
+  th,
+  td {
+    padding: 8px 10px;
+    vertical-align: middle; /* don't stretch rows to the tallest wrapped cell */
+  }
+  th {
+    font-size: 10px;
+  }
+  /* Hide the verbose rationale column on phones — the same reasoning is in the
+     Action badge's tooltip. Keeps rows compact and the table narrower. */
+  .col-why {
+    display: none;
+  }
+
+  /* Range picker wraps instead of overflowing. */
+  .range-picker {
+    flex-wrap: wrap;
+  }
+
+  /* Stack the transaction form to one column. */
+  .tx-grid {
+    grid-template-columns: 1fr;
+  }
+  .tx-notes {
+    grid-column: span 1;
+  }
+
+  .login-card {
+    padding: 20px;
   }
 }
