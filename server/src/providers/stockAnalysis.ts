@@ -36,7 +36,7 @@ async function withSlot<T>(fn: () => Promise<T>): Promise<T> {
 export function cleanName(raw: string | undefined, ticker: string): string {
   if (!raw) return ticker.toUpperCase();
   let n = raw
-    .replace(/\s*\((?:TSX|NYSE|NASDAQ|OTC|NEO)[:-][^)]*\)\s*/i, ' ')
+    .replace(/\s*\([^)]*\)\s*/g, ' ') // drop any "(TSX:SU)" / "(AMZN)" tag
     .replace(/\s*[-|]?\s*(Stock Price|Price|Quote|Overview|& Overview).*$/i, '')
     .replace(/&amp;/g, '&')
     .replace(/&#39;|&apos;/g, "'")
@@ -125,6 +125,60 @@ export class StockAnalysisProvider implements MarketDataProvider {
       eps: null,
       marketCap: null,
     };
+  }
+
+  // Richer quote used by the on-demand "Evaluate Stock" tool: pulls trailing +
+  // forward P/E and EPS (and derives PEG) from the ticker's page, so an
+  // arbitrary symbol can actually be scored without a manual override. Heavier
+  // than getQuote (fetches a full page), so it's not used for the bulk universe.
+  async getQuoteWithRatios(ticker: string): Promise<Quote | null> {
+    return withSlot(async () => {
+      const sym = ticker.toUpperCase();
+      const url = sym.endsWith('.TO')
+        ? `https://stockanalysis.com/quote/tsx/${sym.slice(0, -3)}/`
+        : `https://stockanalysis.com/stocks/${ticker.toLowerCase()}/`;
+      try {
+        let html: string;
+        try {
+          html = await getText(url);
+        } catch {
+          // OTC / ADR (e.g. TCEHY) live under /quote/otc/
+          html = await getText(`https://stockanalysis.com/quote/otc/${sym}/`);
+        }
+        const q = html.match(/quote:\{([^}]*)\}/);
+        const price = q ? Number(q[1].match(/(?:^|,)p:([0-9.]+)/)?.[1]) : undefined;
+        if (price == null || Number.isNaN(price)) return null;
+
+        const field = (k: string) => {
+          const m = html.match(new RegExp(`${k}:"?(-?[0-9.]+)"?`));
+          return m ? Number(m[1]) : null;
+        };
+        const pe = field('peRatio');
+        const forwardPe = field('forwardPE');
+        const nameMatch = html.match(/<title>([^<|]+)/);
+        // Derive PEG the same way the app does elsewhere: trailing P/E ÷ the
+        // 1-yr growth implied by the forward multiple.
+        let peg = field('pegRatio');
+        if (peg === null && pe && forwardPe && pe > forwardPe && forwardPe > 0) {
+          const growth = (pe / forwardPe - 1) * 100;
+          if (growth > 0) peg = Math.round((pe / growth) * 100) / 100;
+        }
+        return {
+          ticker: sym,
+          name: cleanName(nameMatch?.[1], ticker),
+          price,
+          currency: sym.endsWith('.TO') ? 'CAD' : 'USD',
+          pe,
+          forwardPe,
+          peg,
+          eps: field('eps'),
+          marketCap: null,
+        };
+      } catch (err) {
+        console.warn(`[stockanalysis] ratios failed for ${ticker}: ${(err as Error).message}`);
+        return null;
+      }
+    });
   }
 
   getHistory(ticker: string, opts: HistoryOptions): Promise<PricePoint[]> {

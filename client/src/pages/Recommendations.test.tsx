@@ -1,8 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '../test/utils';
 import { RecommendationsPage } from './Recommendations';
-import type { Recommendation } from '../types';
+import type { Recommendation, StockEvaluation } from '../types';
 
 const sample: Recommendation[] = [
   {
@@ -37,11 +38,29 @@ const sample: Recommendation[] = [
   },
 ];
 
+const evaluation: StockEvaluation = {
+  ticker: 'NVDA',
+  name: 'NVIDIA Corporation',
+  market: 'US',
+  price: 1148,
+  pe: 44,
+  forwardPe: 9.8,
+  peg: 0.13,
+  iv: { base: 1597, bear: 1100, best: 2280 },
+  momentum3m: 1.86,
+  score: 84.3,
+  eligible: false,
+  rationale: 'Trades 39% above intrinsic value.',
+};
+
 describe('RecommendationsPage', () => {
   beforeEach(() => {
     vi.stubGlobal(
       'fetch',
-      vi.fn(async () => new Response(JSON.stringify(sample), { status: 200 })),
+      vi.fn(async (url: string) => {
+        const body = String(url).includes('/evaluate/') ? evaluation : sample;
+        return new Response(JSON.stringify(body), { status: 200 });
+      }),
     );
   });
   afterEach(() => vi.unstubAllGlobals());
@@ -61,5 +80,22 @@ describe('RecommendationsPage', () => {
     expect(screen.getByText('$42.00')).toBeInTheDocument();
     // MKT column removed
     expect(screen.queryByText('CA', { exact: true })).not.toBeInTheDocument();
+  });
+
+  it('evaluates an arbitrary ticker into a single row with the same columns', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<RecommendationsPage />);
+    await waitFor(() => expect(screen.getByText('INTC')).toBeInTheDocument());
+
+    await user.type(screen.getByLabelText('Stock symbol'), 'nvda');
+    await user.click(screen.getByRole('button', { name: 'Evaluate' }));
+
+    await waitFor(() => expect(screen.getByTestId('evaluate-row')).toBeInTheDocument());
+    const row = within(screen.getByTestId('evaluate-row'));
+    expect(row.getByText('NVDA')).toBeInTheDocument();
+    expect(row.getByText('84')).toBeInTheDocument(); // score badge
+    expect(row.getByText('$1,148.00')).toBeInTheDocument(); // price
+    // Ineligible names are still shown, with the reason surfaced as a note.
+    expect(screen.getByText(/Not eligible for the recommendation list/i)).toBeInTheDocument();
   });
 });

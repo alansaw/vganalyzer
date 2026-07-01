@@ -41,6 +41,9 @@ export interface MarketDataProvider {
   getQuote(ticker: string): Promise<Quote | null>;
   getQuotes(tickers: string[]): Promise<Quote[]>;
   getHistory(ticker: string, opts: HistoryOptions): Promise<PricePoint[]>;
+  // Optional richer quote (price + P/E + forward P/E + PEG + EPS) for on-demand
+  // single-ticker evaluation. Providers that can't supply ratios omit this.
+  getQuoteWithRatios?(ticker: string): Promise<Quote | null>;
 }
 
 export function toISODate(d: Date): string {

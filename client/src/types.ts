@@ -82,6 +82,21 @@ export interface Recommendation {
   generatedAt: string;
 }
 
+export interface StockEvaluation {
+  ticker: string;
+  name: string;
+  market: string;
+  price: number | null;
+  pe: number | null;
+  forwardPe: number | null;
+  peg: number | null;
+  iv: IntrinsicValue | null;
+  momentum3m: number | null;
+  score: number;
+  eligible: boolean;
+  rationale: string;
+}
+
 export type Role = 'admin' | 'user';
 
 export interface AuthInfo {

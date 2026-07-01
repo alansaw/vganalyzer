@@ -90,6 +90,15 @@ export class OverrideProvider implements MarketDataProvider {
     return this.applyQuote(ticker, await this.base.getQuote(ticker));
   }
 
+  // Rich single-ticker quote for the evaluator: fetch ratios from the base, then
+  // overlay any pinned pe/peg/iv (a pinned DCF IV still wins over the estimate).
+  async getQuoteWithRatios(ticker: string): Promise<Quote | null> {
+    const base = this.base.getQuoteWithRatios
+      ? await this.base.getQuoteWithRatios(ticker)
+      : await this.base.getQuote(ticker);
+    return this.applyQuote(ticker, base);
+  }
+
   async getQuotes(tickers: string[]): Promise<Quote[]> {
     const quotes = await this.base.getQuotes(tickers);
     const byTicker = new Map(quotes.map((q) => [q.ticker.toUpperCase(), q]));

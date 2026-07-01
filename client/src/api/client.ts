@@ -9,6 +9,7 @@ import type {
   PositionValue,
   Range,
   Recommendation,
+  StockEvaluation,
   Transaction,
 } from '../types';
 
@@ -58,6 +59,8 @@ export const api = {
     http<void>(`/transactions/${id}`, { method: 'DELETE' }),
   getEtfs: () => http<EtfsResponse>('/etfs'),
   getRecommendations: () => http<Recommendation[]>('/recommendations'),
+  evaluateStock: (symbol: string) =>
+    http<StockEvaluation>(`/recommendations/evaluate/${encodeURIComponent(symbol.trim())}`),
   refreshRecommendations: () =>
     http<Recommendation[]>('/recommendations/refresh', { method: 'POST' }),
 };

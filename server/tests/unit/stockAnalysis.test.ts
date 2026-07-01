@@ -8,6 +8,8 @@ describe('cleanName', () => {
       'NVIDIA Corporation',
     );
     expect(cleanName('Tencent Holdings (OTC:TCEHY) Stock Price', 'TCEHY')).toBe('Tencent Holdings');
+    // Stocks-page titles use a bare ticker tag: "Amazon.com (AMZN) ...".
+    expect(cleanName('Amazon.com (AMZN) Stock Price & Overview', 'AMZN')).toBe('Amazon.com');
   });
 
   it('decodes HTML entities', () => {

@@ -370,6 +370,35 @@ tbody tr:hover {
   text-decoration: underline;
 }
 
+/* Evaluate Stock */
+.evaluate-form {
+  display: flex;
+  gap: 8px;
+  margin: 4px 0 8px;
+}
+.evaluate-form input {
+  flex: 0 1 260px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  text-transform: uppercase;
+}
+.evaluate-form input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.eval-note {
+  margin: 8px 0 0;
+}
+@media (max-width: 640px) {
+  .evaluate-form input {
+    flex: 1;
+  }
+}
+
 /* Safety badges (My ETFs) */
 .safety-badge {
   display: inline-block;

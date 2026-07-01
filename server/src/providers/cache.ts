@@ -47,6 +47,12 @@ export class CachingProvider implements MarketDataProvider {
     return value;
   }
 
+  // Pass the richer single-ticker quote straight through to the base (used by
+  // the on-demand evaluator; not worth caching the same way as bulk quotes).
+  async getQuoteWithRatios(ticker: string): Promise<Quote | null> {
+    return this.base.getQuoteWithRatios ? this.base.getQuoteWithRatios(ticker) : this.base.getQuote(ticker);
+  }
+
   async getQuotes(tickers: string[]): Promise<Quote[]> {
     // Only fetch the tickers we don't already have cached.
     const misses = tickers.filter((t) => !this.fresh(this.quoteCache, t.toUpperCase()));

@@ -154,6 +154,21 @@ suite('API integration', () => {
     expect(res.body.length).toBeGreaterThan(0);
   });
 
+  it('evaluates an arbitrary ticker on demand', async () => {
+    const res = await request(app).get('/api/recommendations/evaluate/INTC');
+    expect(res.status).toBe(200);
+    expect(res.body.ticker).toBe('INTC');
+    expect(res.body.price).toBeGreaterThan(0);
+    expect(typeof res.body.score).toBe('number');
+    expect(typeof res.body.eligible).toBe('boolean');
+    expect(res.body.rationale).toBeTruthy();
+  });
+
+  it('rejects a malformed ticker', async () => {
+    const res = await request(app).get('/api/recommendations/evaluate/not a symbol!');
+    expect(res.status).toBe(400);
+  });
+
   // Auth + roles. Runs LAST: setting the env vars turns authentication on
   // (auth.ts reads env per request), which would 401 the earlier tests.
   describe('authentication & roles', () => {

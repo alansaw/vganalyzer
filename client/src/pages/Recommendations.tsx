@@ -1,10 +1,8 @@
-import { Link } from 'react-router-dom';
-import { ScoreBadge } from '../components/ScoreBadge';
 import { Loading, ErrorState, EmptyState } from '../components/States';
+import { RecoRow, RecoTableHead } from '../components/RecoRow';
+import { EvaluateStock } from '../components/EvaluateStock';
 import { useIsAdmin } from '../auth';
 import { useRecommendations, useRefreshRecommendations } from '../hooks/queries';
-import { ivRangeText, money, percent, ratio, signClass } from '../format';
-import { actionClass, actionForPosition } from '../action';
 
 export function RecommendationsPage() {
   const recs = useRecommendations();
@@ -43,69 +41,18 @@ export function RecommendationsPage() {
         ) : (
           <div className="table-wrap">
             <table>
-              <thead>
-                <tr>
-                  <th className="num">#</th>
-                  <th>Ticker</th>
-                  <th className="num">Score</th>
-                  <th className="num">Price</th>
-                  <th className="num">Intrinsic Value</th>
-                  <th>Action</th>
-                  <th className="num">Fwd P/E</th>
-                  <th className="num">PEG</th>
-                  <th className="num">3-mo</th>
-                  <th className="col-why">Why</th>
-                </tr>
-              </thead>
+              <RecoTableHead />
               <tbody>
                 {recs.data.map((r) => (
-                  <tr key={r.ticker} data-testid="reco-row">
-                    <td className="num muted">{r.rank}</td>
-                    <td>
-                      <Link to={`/positions/${encodeURIComponent(r.ticker)}`} className="ticker-link">
-                        {r.ticker}
-                      </Link>
-                      <div className="muted small">{r.name}</div>
-                    </td>
-                    <td className="num">
-                      <ScoreBadge score={r.score} />
-                    </td>
-                    <td className="num">{money(r.price, r.market === 'CA' ? 'CAD' : 'USD')}</td>
-                    <td className="num">
-                      {r.iv ? (
-                        <>
-                          {money(r.iv.base, r.market === 'CA' ? 'CAD' : 'USD')}
-                          {ivRangeText(r.iv, r.market === 'CA' ? 'CAD' : 'USD') && (
-                            <div className="muted small">
-                              {ivRangeText(r.iv, r.market === 'CA' ? 'CAD' : 'USD')}
-                            </div>
-                          )}
-                        </>
-                      ) : (
-                        '—'
-                      )}
-                    </td>
-                    <td>
-                      {(() => {
-                        const a = actionForPosition(r.price, r.iv);
-                        return (
-                          <span className={`action-badge ${actionClass(a.action)}`} title={a.reason}>
-                            {a.action}
-                          </span>
-                        );
-                      })()}
-                    </td>
-                    <td className="num">{ratio(r.forwardPe, 1)}</td>
-                    <td className="num">{ratio(r.peg)}</td>
-                    <td className={`num ${signClass(r.momentum3m)}`}>{percent(r.momentum3m)}</td>
-                    <td className="muted small col-why">{r.rationale}</td>
-                  </tr>
+                  <RecoRow key={r.ticker} r={r} rank={r.rank} />
                 ))}
               </tbody>
             </table>
           </div>
         )}
       </section>
+
+      <EvaluateStock />
 
       <p className="muted small disclaimer">
         For research only — not investment advice. Figures are sourced from public market data and may be delayed.
