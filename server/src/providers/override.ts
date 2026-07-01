@@ -8,12 +8,15 @@ import type {
   PricePoint,
   Quote,
 } from './types.js';
+import { computeDcf, type DcfAssumptions } from '../services/dcf.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 // server/src/providers -> server/data/manual-prices.json (and dist/providers -> server/data)
 const OVERRIDE_FILE = join(here, '..', '..', 'data', 'manual-prices.json');
 
 // Per-ticker manual override. Any field present wins over the upstream provider.
+// `iv` can be given directly, OR derived from a per-stock `dcf` assumption block
+// (preferred — transparent and editable). If both are present, `dcf` wins.
 export interface TickerOverride {
   price?: number;
   pe?: number;
@@ -21,6 +24,7 @@ export interface TickerOverride {
   peg?: number;
   eps?: number;
   iv?: IntrinsicValue | null;
+  dcf?: DcfAssumptions;
 }
 
 export type Overrides = Record<string, TickerOverride>;
@@ -42,6 +46,30 @@ function parseIv(v: unknown): IntrinsicValue | undefined {
   return undefined;
 }
 
+// Parse a per-stock DCF assumption block. Requires the four core inputs;
+// returns undefined (falls back to a directly-pinned iv) if any is missing.
+function parseDcf(v: unknown): DcfAssumptions | undefined {
+  if (!v || typeof v !== 'object') return undefined;
+  const o = v as Record<string, unknown>;
+  const eps0 = numOrUndef(o.eps0);
+  const growth = numOrUndef(o.growth);
+  const terminalGrowth = numOrUndef(o.terminalGrowth);
+  const discountRate = numOrUndef(o.discountRate);
+  if (eps0 === undefined || growth === undefined || terminalGrowth === undefined || discountRate === undefined) {
+    return undefined;
+  }
+  return {
+    eps0,
+    growth,
+    terminalGrowth,
+    discountRate,
+    years: numOrUndef(o.years),
+    netCashPerShare: numOrUndef(o.netCashPerShare),
+    drSensitivity: numOrUndef(o.drSensitivity),
+    rationale: typeof o.rationale === 'string' ? o.rationale : undefined,
+  };
+}
+
 export function loadOverrides(file = OVERRIDE_FILE): { overrides: Overrides; asOf?: string } {
   try {
     if (!existsSync(file)) return { overrides: {} };
@@ -57,12 +85,15 @@ export function loadOverrides(file = OVERRIDE_FILE): { overrides: Overrides; asO
       const forwardPe = numOrUndef(o.forwardPe);
       const peg = numOrUndef(o.peg);
       const eps = numOrUndef(o.eps);
-      const iv = parseIv(o.iv);
+      const dcf = parseDcf(o.dcf);
+      // A `dcf` block derives the IV transparently; a direct `iv` is the fallback.
+      const iv = dcf ? computeDcf(dcf) : parseIv(o.iv);
       if (price !== undefined) entry.price = price;
       if (pe !== undefined) entry.pe = pe;
       if (forwardPe !== undefined) entry.forwardPe = forwardPe;
       if (peg !== undefined) entry.peg = peg;
       if (eps !== undefined) entry.eps = eps;
+      if (dcf !== undefined) entry.dcf = dcf;
       if (iv !== undefined) entry.iv = iv;
       if (Object.keys(entry).length > 0) overrides[ticker.toUpperCase()] = entry;
     }

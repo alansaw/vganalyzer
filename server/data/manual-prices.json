@@ -1,6 +1,6 @@
 {
-  "_comment": "Manual per-ticker overrides applied on top of the live provider. NOTE: as of 2026-06-15 the app fetches LIVE prices from stockanalysis.com, so the `price` field here is only a FALLBACK used when a live quote can't be fetched — it no longer freezes the displayed price. pe/forwardPe/peg/eps/iv still override (the quote API carries price only). Earlier-sourced ratios below: ALL 20 Canadian (.TO) names refreshed 2026-06-09 from stockanalysis.com TSX pages with real price + trailing P/E + forward P/E; peg computed as trailingPE / implied 1-yr growth% where growth = (trailingPE/forwardPE - 1)*100. Names with declining forward earnings (no computable PEG) keep mock PEG. Holdings (NVDA/SE/TCEHY) carry DCF IVs. NVDA re-valued 2026-06-13 to the REVENUE-ANCHORED case (user's investment thesis): base $228 on concrete FY27 guidance (Q1 FY27 actual $81.6B + Q2 guide $91B => ~$355B full-year run rate vs $216B FY26), ~55% FCF margin, beta 1.42 => WACC 11.4%, terminal 3%. bear $109 = 15.3% WACC (raw-beta risk case); best $319 = high end of analyst consensus ($298-319). Supersedes the earlier conservative TTM-FCF figure ($111, WACC 12.06%). US names other than the detailed ones are price-only (ratios still mock). Delete a field or the file to revert.",
-  "asOf": "2026-06-13",
+  "_comment": "Manual per-ticker overrides applied on top of the live provider. `price` is a FALLBACK only (live wins). IV is now DERIVED per-stock from a `dcf` assumption block (services/dcf.ts): each name gets its own eps0 (anchor forward EPS/FCF-per-share), near-term growth, terminalGrowth, discountRate, and optional netCashPerShare — so a wide-moat compounder, a margin-inflecting platform, and a cyclical commodity are valued differently, and every assumption is visible/editable. base/bear/best are computed (bear = +1% discount & 0.7x growth; best = -1% discount & 1.3x growth). Assumptions set 2026-06-27, aligned to per-stock theses (NVDA Blackwell/Rubin, SE profitability inflection, TCEHY steady + China premium, MU normalized mid-cycle EPS). Change any number and the IV recomputes on restart. A plain `iv:{base,bear,best}` still works if no `dcf` block. Canadian (.TO) names carry sourced price/PE/forwardPE/peg; other US names are price-only.",
+  "asOf": "2026-06-27",
   "overrides": {
     "NVDA": {
       "price": 205.38,
@@ -8,10 +8,13 @@
       "forwardPe": 20.61,
       "peg": 0.6,
       "eps": 6.53,
-      "iv": {
-        "bear": 109,
-        "base": 228,
-        "best": 319
+      "dcf": {
+        "eps0": 8.97,
+        "growth": 0.30,
+        "terminalGrowth": 0.04,
+        "discountRate": 0.105,
+        "netCashPerShare": 2,
+        "rationale": "2027 consensus EPS $8.97; 30% near-term growth fading; 10.5% discount (higher beta); Blackwell/Rubin structural upgrade cycle."
       }
     },
     "SE": {
@@ -20,10 +23,13 @@
       "forwardPe": 20.46,
       "peg": 0.51,
       "eps": 2.54,
-      "iv": {
-        "bear": 142,
-        "base": 167,
-        "best": 205
+      "dcf": {
+        "eps0": 6.0,
+        "growth": 0.20,
+        "terminalGrowth": 0.04,
+        "discountRate": 0.115,
+        "netCashPerShare": 11,
+        "rationale": "Profitability inflection (exiting cash burn); 20% top-line compounding across e-commerce/gaming/digital finance; 11.5% discount for EM risk."
       }
     },
     "TCEHY": {
@@ -32,10 +38,13 @@
       "forwardPe": 13.89,
       "peg": 0.64,
       "eps": 3.45,
-      "iv": {
-        "bear": 70,
-        "base": 93,
-        "best": 115
+      "dcf": {
+        "eps0": 3.45,
+        "growth": 0.11,
+        "terminalGrowth": 0.03,
+        "discountRate": 0.10,
+        "netCashPerShare": 5,
+        "rationale": "Steady 11% growth (gaming + WeChat Pay); 10% discount incl. China geopolitical premium; excludes large investment-portfolio value (conservative)."
       }
     },
     "MU": {
@@ -43,7 +52,14 @@
       "pe": 44.66,
       "forwardPe": 9.81,
       "peg": 0.13,
-      "eps": 21.26
+      "eps": 21.26,
+      "dcf": {
+        "eps0": 75,
+        "growth": 0.15,
+        "terminalGrowth": 0.03,
+        "discountRate": 0.11,
+        "rationale": "NORMALIZED mid-cycle EPS $75 (deliberately below peak 2027 run-rate of $100+); 11% discount for commodity-memory cyclicality; HBM pricing power. Cyclical — treat as a wide range."
+      }
     },
     "RY.TO": {
       "price": 276.01,
