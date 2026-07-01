@@ -108,6 +108,12 @@ export async function evaluateTicker(
   };
   const result = scoreStock(metrics);
 
+  // Surface the DCF assumptions (when this IV came from a per-stock DCF block)
+  // in the "Why" text, so the reasoning behind the valuation is visible.
+  const rationale = iv?.rationale
+    ? `${result.rationale} IV basis: ${iv.rationale}`
+    : result.rationale;
+
   return {
     ticker: symbol,
     name: quote.name ?? fallbackName ?? symbol,
@@ -120,7 +126,7 @@ export async function evaluateTicker(
     momentum3m,
     score: result.score,
     eligible: result.eligible,
-    rationale: result.rationale,
+    rationale,
   };
 }
 

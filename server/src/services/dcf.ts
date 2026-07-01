@@ -76,5 +76,6 @@ export function computeDcf(a: DcfAssumptions): IntrinsicValue {
     base: round(base),
     bear: round(Math.min(bear, base)),
     best: round(Math.max(best, base)),
+    rationale: a.rationale,
   };
 }

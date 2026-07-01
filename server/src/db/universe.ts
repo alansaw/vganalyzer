@@ -52,6 +52,7 @@ export const UNIVERSE: SeedTicker[] = [
   { symbol: 'MSFT', name: 'Microsoft Corporation', market: 'US' },
   { symbol: 'NVDA', name: 'NVIDIA Corporation', market: 'US' },
   { symbol: 'GOOGL', name: 'Alphabet Inc.', market: 'US' },
+  { symbol: 'AMZN', name: 'Amazon.com, Inc.', market: 'US' },
   // Canada (TSX, .TO)
   { symbol: 'RY.TO', name: 'Royal Bank of Canada', market: 'CA' },
   { symbol: 'TD.TO', name: 'Toronto-Dominion Bank', market: 'CA' },

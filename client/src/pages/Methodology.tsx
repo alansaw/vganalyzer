@@ -29,8 +29,8 @@ export function MethodologyPage() {
                   <code>IV = PV of 5 yrs of earnings/cash flow + PV of terminal value</code>
                 </td>
                 <td>
-                  Two methods (see below): a hand-built DCF for holdings, or a computed
-                  forward-earnings estimate for everything else. Pinned DCF always wins.
+                  Two methods (see below): a per-stock DCF with its own assumptions for pinned
+                  names, or a computed forward-earnings estimate as fallback. Pinned DCF always wins.
                 </td>
               </tr>
               <tr>
@@ -175,18 +175,24 @@ export function MethodologyPage() {
             </thead>
             <tbody>
               <tr>
-                <td><strong>Pinned DCF</strong></td>
-                <td>Holdings (NVDA, SE, TCEHY)</td>
+                <td><strong>Per-stock DCF</strong></td>
+                <td>Names with pinned assumptions (NVDA, SE, TCEHY, MU, GOOGL, AMZN)</td>
                 <td>
-                  Two-stage FCFF DCF: 5 yrs of free cash flow with fading growth, terminal
-                  value at 3% perpetual growth, discounted at WACC (CAPM: 10-yr Treasury +
-                  beta × 5% equity risk premium), minus net debt, ÷ diluted shares.
+                  Two-stage discounted-earnings model where <strong>each stock carries its own
+                  assumptions</strong>: an anchor forward EPS/FCF-per-share (<code>eps0</code>),
+                  near-term <code>growth</code> fading linearly to <code>terminalGrowth</code> over
+                  5 yrs, a Gordon terminal value, all discounted at that stock&rsquo;s own{' '}
+                  <code>discountRate</code>, plus <code>netCashPerShare</code>. No single generic
+                  rate — a wide-moat compounder, a margin-inflecting platform, and a cyclical
+                  commodity are each valued on their merits.
                 </td>
-                <td>Corners of the WACC ±1% × terminal-growth ±1% sensitivity grid.</td>
+                <td>
+                  Bear: 0.7× growth &amp; discount +1%. Best: 1.3× growth &amp; discount −1%.
+                </td>
               </tr>
               <tr>
                 <td><strong>Computed estimate</strong></td>
-                <td>Everything else</td>
+                <td>Everything else (fallback)</td>
                 <td>
                   Forward EPS (<code>price ÷ forward P/E</code>) grown for 5 yrs — year-1
                   growth from the trailing→forward earnings ramp (capped 2–20%), fading to
@@ -199,10 +205,61 @@ export function MethodologyPage() {
             </tbody>
           </table>
         </div>
+
+        <h2 style={{ marginTop: 20 }}>Pinned DCF assumptions, per stock</h2>
+        <div className="table-wrap">
+          <table className="methodology">
+            <thead>
+              <tr>
+                <th>Stock</th>
+                <th className="num">Anchor EPS</th>
+                <th className="num">Near-term growth</th>
+                <th className="num">Terminal g</th>
+                <th className="num">Discount</th>
+                <th className="num">IV base</th>
+                <th>Thesis</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>NVDA</td><td className="num">$8.97</td><td className="num">30%</td>
+                <td className="num">4%</td><td className="num">10.5%</td><td className="num">$249</td>
+                <td>High beta; Blackwell/Rubin structural upgrade cycle.</td>
+              </tr>
+              <tr>
+                <td>GOOGL</td><td className="num">$14.55</td><td className="num">12%</td>
+                <td className="num">3.5%</td><td className="num">9%</td><td className="num">$337</td>
+                <td>Wide moat, big cash buffer; search maturing, cloud scaling.</td>
+              </tr>
+              <tr>
+                <td>AMZN</td><td className="num">$9.50</td><td className="num">24%</td>
+                <td className="num">4%</td><td className="num">9.25%</td><td className="num">$293</td>
+                <td>FCF masked by capex depreciation; AWS + automation.</td>
+              </tr>
+              <tr>
+                <td>SE</td><td className="num">$6.00</td><td className="num">20%</td>
+                <td className="num">4%</td><td className="num">11.5%</td><td className="num">$128</td>
+                <td>Profitability inflection; EM risk premium.</td>
+              </tr>
+              <tr>
+                <td>MU</td><td className="num">$75.00</td><td className="num">15%</td>
+                <td className="num">3%</td><td className="num">11%</td><td className="num">$1,253</td>
+                <td>Normalized mid-cycle EPS (below peak); HBM pricing; cyclical.</td>
+              </tr>
+              <tr>
+                <td>TCEHY</td><td className="num">$3.45</td><td className="num">11%</td>
+                <td className="num">3%</td><td className="num">10%</td><td className="num">$66</td>
+                <td>Steady gaming + WeChat Pay; China geopolitical premium.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
         <p className="muted small">
-          Caution: the computed estimate systematically overvalues cyclicals near an
-          earnings peak (e.g. memory stocks), because it extrapolates the forward ramp.
-          Treat it as a screen, not a valuation.
+          Assumptions live in <code>server/data/manual-prices.json</code> as a per-ticker{' '}
+          <code>dcf</code> block — change any number and the IV recomputes. The thesis behind each
+          is also shown in the &ldquo;Why&rdquo; column on Recommendations. Caution: the fallback
+          computed estimate systematically overvalues cyclicals near an earnings peak; and MU&rsquo;s
+          $1,253 rests on an aggressive normalized-EPS/HBM thesis — treat its wide bear band as real.
         </p>
       </section>
 

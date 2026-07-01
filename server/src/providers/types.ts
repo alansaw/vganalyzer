@@ -4,6 +4,7 @@ export interface IntrinsicValue {
   base: number;
   bear?: number | null;
   best?: number | null;
+  rationale?: string; // short note on the DCF assumptions behind this IV
 }
 
 export interface Quote {

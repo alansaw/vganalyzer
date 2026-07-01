@@ -87,6 +87,18 @@
     "AMD": {
       "price": 475.5
     },
+    "AMZN": {
+      "pe": 28.5,
+      "forwardPe": 28.49,
+      "dcf": {
+        "eps0": 9.50,
+        "growth": 0.24,
+        "terminalGrowth": 0.04,
+        "discountRate": 0.0925,
+        "netCashPerShare": 4,
+        "rationale": "2027 FCF-per-share ~$9.50 (heavy capex depreciation masks true cash generation); 24% compounding via AWS + robotics automation; 9.25% discount."
+      }
+    },
     "AVGO": {
       "price": 392.16
     },
@@ -118,7 +130,16 @@
       "price": 83.76
     },
     "GOOGL": {
-      "price": 364.26
+      "pe": 27.26,
+      "forwardPe": 28.52,
+      "dcf": {
+        "eps0": 14.55,
+        "growth": 0.12,
+        "terminalGrowth": 0.035,
+        "discountRate": 0.09,
+        "netCashPerShare": 6,
+        "rationale": "2027 consensus EPS $14.55; 12% near-term growth (search maturing, cloud margins scaling); 9% discount (wide moat, large cash buffer)."
+      }
     },
     "HPQ": {
       "price": 24.94

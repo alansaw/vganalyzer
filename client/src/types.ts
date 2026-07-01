@@ -7,6 +7,7 @@ export interface IntrinsicValue {
   base: number;
   bear?: number | null;
   best?: number | null;
+  rationale?: string;
 }
 
 export interface Quote {
