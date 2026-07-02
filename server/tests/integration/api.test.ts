@@ -146,6 +146,12 @@ suite('API integration', () => {
       expect(r.iv.base).toBeGreaterThan(0);
       expect(r.forwardPe).not.toBeNull();
     }
+
+    // Inclusion rule: score > 35 (not gate-eligibility). No sub-35 names leak in.
+    for (const r of res.body) {
+      expect(r.score).toBeGreaterThan(35);
+    }
+    expect(res.body.length).toBeLessThanOrEqual(50);
   });
 
   it('serves the latest recommendations from cache', async () => {

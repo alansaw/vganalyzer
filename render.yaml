@@ -27,7 +27,7 @@ services:
       - key: MARKET_PROVIDER
         value: yahoo
       - key: RECOMMENDATION_COUNT
-        value: "40"
+        value: "50"
       - key: DATABASE_URL
         sync: false
       - key: ADMIN_PASSWORD

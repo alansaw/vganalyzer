@@ -52,6 +52,7 @@ export const UNIVERSE: SeedTicker[] = [
   { symbol: 'MSFT', name: 'Microsoft Corporation', market: 'US' },
   { symbol: 'NVDA', name: 'NVIDIA Corporation', market: 'US' },
   { symbol: 'GOOGL', name: 'Alphabet Inc.', market: 'US' },
+  { symbol: 'GOOG', name: 'Alphabet Inc. (Class C)', market: 'US' },
   { symbol: 'AMZN', name: 'Amazon.com, Inc.', market: 'US' },
   // Canada (TSX, .TO)
   { symbol: 'RY.TO', name: 'Royal Bank of Canada', market: 'CA' },
@@ -76,16 +77,20 @@ export const UNIVERSE: SeedTicker[] = [
   { symbol: 'IFC.TO', name: 'Intact Financial Corporation', market: 'CA' },
 ];
 
-// Seed the universe into an EMPTY tickers table (fresh production database).
-// No demo transactions — the portfolio starts clean.
+// Ensure every universe ticker exists (idempotent upsert, run on each startup).
+// This also propagates NEW names added to UNIVERSE into an already-seeded
+// production DB — previously it bailed when the table was non-empty, so later
+// additions (e.g. AMZN) never reached production. Existing rows and any demo
+// transactions are untouched (ON CONFLICT DO NOTHING).
 export async function ensureUniverseSeeded(): Promise<void> {
-  const { rows } = await query<{ count: number }>(`SELECT COUNT(*)::int AS count FROM tickers`);
-  if (rows[0].count > 0) return;
+  const { rows: before } = await query<{ count: number }>(`SELECT COUNT(*)::int AS count FROM tickers`);
   for (const t of UNIVERSE) {
     await query(
       `INSERT INTO tickers (symbol, name, market) VALUES ($1, $2, $3) ON CONFLICT (symbol) DO NOTHING`,
       [t.symbol, t.name, t.market],
     );
   }
-  console.log(`seeded ${UNIVERSE.length} universe tickers into empty database`);
+  const { rows: after } = await query<{ count: number }>(`SELECT COUNT(*)::int AS count FROM tickers`);
+  const added = after[0].count - before[0].count;
+  if (added > 0) console.log(`seeded ${added} new universe ticker(s) (${after[0].count} total)`);
 }

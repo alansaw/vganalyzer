@@ -136,7 +136,11 @@ export async function evaluateTicker(
   };
 }
 
-// Evaluate the universe, score eligible names and return the top `limit`.
+// Recommendations include any scored name above this bar (not just gate-eligible
+// ones), so quality names priced a touch above their IV (e.g. GOOG) still show.
+export const MIN_RECOMMENDATION_SCORE = 35;
+
+// Evaluate the universe, score names above the bar and return the top `limit`.
 export async function generateRecommendations(
   provider: MarketDataProvider,
   universe: UniverseTicker[],
@@ -147,7 +151,7 @@ export async function generateRecommendations(
   );
 
   return evaluated
-    .filter((e): e is StockEvaluation => e !== null && e.eligible)
+    .filter((e): e is StockEvaluation => e !== null && e.score > MIN_RECOMMENDATION_SCORE)
     .sort((a, b) => b.score - a.score)
     .slice(0, limit)
     .map((e) => ({

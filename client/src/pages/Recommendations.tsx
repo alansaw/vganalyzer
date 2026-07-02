@@ -17,7 +17,7 @@ export function RecommendationsPage() {
         <div>
           <h1>Recommendations</h1>
           <p className="muted">
-            Value-Growth picks across US &amp; Canadian markets — ranked on PEG, forward P/E, momentum and discount to intrinsic value. Names trading above their IV are excluded.
+            Value-Growth picks across US &amp; Canadian markets — ranked on PEG, forward P/E, momentum and discount to intrinsic value. Up to 50 names scoring above 35.
           </p>
         </div>
         {isAdmin && (

@@ -9,7 +9,7 @@ export const config = {
     process.env.DATABASE_URL ??
     `postgresql://${osUser}@localhost:5432/vganalyzer`,
   provider: (process.env.MARKET_PROVIDER ?? 'yahoo') as 'yahoo' | 'mock',
-  recommendationCount: Number(process.env.RECOMMENDATION_COUNT ?? 12),
+  recommendationCount: Number(process.env.RECOMMENDATION_COUNT ?? 50),
   recommendationTtlMinutes: Number(process.env.RECOMMENDATION_TTL_MIN ?? 720),
   // In-memory caching of upstream quote/history calls so repeated page loads
   // don't re-hit the source. Quote TTL is short so prices stay current intraday
