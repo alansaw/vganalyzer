@@ -90,6 +90,7 @@
     "AMZN": {
       "pe": 28.5,
       "forwardPe": 28.49,
+      "peg": 1.83,
       "dcf": {
         "eps0": 9.50,
         "growth": 0.24,
@@ -132,6 +133,7 @@
     "GOOGL": {
       "pe": 27.26,
       "forwardPe": 28.52,
+      "peg": 1.39,
       "dcf": {
         "eps0": 14.55,
         "growth": 0.12,

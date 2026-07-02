@@ -156,12 +156,19 @@ export class StockAnalysisProvider implements MarketDataProvider {
         const pe = field('peRatio');
         const forwardPe = field('forwardPE');
         const nameMatch = html.match(/<title>([^<|]+)/);
-        // Derive PEG the same way the app does elsewhere: trailing P/E ÷ the
-        // 1-yr growth implied by the forward multiple.
+        // Derive PEG from forward P/E ÷ the 1-yr growth implied by the
+        // trailing→forward multiple. This is only meaningful when forward is
+        // clearly below trailing; when they're ~equal (tiny implied growth) the
+        // ratio explodes, and when forward > trailing it goes negative. In both
+        // cases leave PEG unavailable (null) rather than show a garbage number
+        // like 800 — a pinned peg in manual-prices.json supersedes this anyway.
         let peg = field('pegRatio');
-        if (peg === null && pe && forwardPe && pe > forwardPe && forwardPe > 0) {
-          const growth = (pe / forwardPe - 1) * 100;
-          if (growth > 0) peg = Math.round((pe / growth) * 100) / 100;
+        if (peg === null && pe && forwardPe && forwardPe > 0) {
+          const growthPct = (pe / forwardPe - 1) * 100;
+          if (growthPct >= 3) {
+            const candidate = Math.round((forwardPe / growthPct) * 100) / 100;
+            if (candidate > 0 && candidate <= 5) peg = candidate; // sane range only
+          }
         }
         return {
           ticker: sym,
