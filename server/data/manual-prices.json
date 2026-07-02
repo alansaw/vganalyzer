@@ -143,6 +143,19 @@
         "rationale": "2027 consensus EPS $14.55; 12% near-term growth (search maturing, cloud margins scaling); 9% discount (wide moat, large cash buffer)."
       }
     },
+    "GOOG": {
+      "pe": 27.26,
+      "forwardPe": 28.52,
+      "peg": 1.39,
+      "dcf": {
+        "eps0": 14.55,
+        "growth": 0.12,
+        "terminalGrowth": 0.035,
+        "discountRate": 0.09,
+        "netCashPerShare": 6,
+        "rationale": "Alphabet Class C — same fundamentals as GOOGL. 2027 consensus EPS $14.55; 12% near-term growth; 9% discount (wide moat, large cash buffer)."
+      }
+    },
     "HPQ": {
       "price": 24.94
     },
