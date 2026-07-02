@@ -169,6 +169,15 @@ suite('API integration', () => {
     expect(res.status).toBe(400);
   });
 
+  it('gives an ineligible name its real score (not a misleading 0)', async () => {
+    // NVDA in the mock fixture is expensive + run-up -> ineligible for the list,
+    // but should still report a genuine value-growth score, like the Grades page.
+    const res = await request(app).get('/api/recommendations/evaluate/NVDA');
+    expect(res.status).toBe(200);
+    expect(res.body.eligible).toBe(false);
+    expect(res.body.score).toBeGreaterThan(0);
+  });
+
   // Auth + roles. Runs LAST: setting the env vars turns authentication on
   // (auth.ts reads env per request), which would 401 the earlier tests.
   describe('authentication & roles', () => {

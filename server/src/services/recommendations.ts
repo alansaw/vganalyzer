@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { query } from '../db/pool.js';
 import type { IntrinsicValue, MarketDataProvider } from '../providers/index.js';
-import { scoreStock, type StockMetrics } from './scoring.js';
+import { computeFactorScores, scoreStock, type StockMetrics } from './scoring.js';
 import { resolveIntrinsicValue } from './intrinsicValue.js';
 
 export interface UniverseTicker {
@@ -106,13 +106,19 @@ export async function evaluateTicker(
     momentum3m,
     ivDiscount,
   };
-  const result = scoreStock(metrics);
+  // Eligibility gates decide what qualifies for the ranked list...
+  const gated = scoreStock(metrics);
+  // ...but the SCORE is always the real value-growth score, even for names the
+  // gates exclude (a 7%-above-IV name shouldn't read a misleading 0). This is
+  // the same ungated score the Grades page uses.
+  const factors = computeFactorScores(metrics);
+  const score = factors?.score ?? gated.score;
 
   // Surface the DCF assumptions (when this IV came from a per-stock DCF block)
   // in the "Why" text, so the reasoning behind the valuation is visible.
   const rationale = iv?.rationale
-    ? `${result.rationale} IV basis: ${iv.rationale}`
-    : result.rationale;
+    ? `${gated.rationale} IV basis: ${iv.rationale}`
+    : gated.rationale;
 
   return {
     ticker: symbol,
@@ -124,8 +130,8 @@ export async function evaluateTicker(
     peg: quote.peg,
     iv,
     momentum3m,
-    score: result.score,
-    eligible: result.eligible,
+    score,
+    eligible: gated.eligible,
     rationale,
   };
 }
